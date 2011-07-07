@@ -49,7 +49,13 @@ join_conditions
     / join_using
 
 join_on
-    = "ON" __ left:field __ "=" __ right:field {
+    = "ON" first:join_on_condition subsequent:join_on_condition* {
+        subsequent.unshift(first)
+        return subsequent
+    }
+
+join_on_condition
+    = __ left:qualifiedName __ "=" __ right:qualifiedName {
         return { left: left, right: right }; 
     }
 
@@ -69,6 +75,11 @@ field
         return table + "." + column;
     }
     / name
+
+qualifiedName
+    = table:name _ "." _ column:name {
+        return table + "." + column;
+    }
 
 select_columns
     = first:select_column subsequent:(_ comma _ select_column)* {
@@ -100,6 +111,9 @@ FrOm    = [Ff][Rr][Oo][Mm]
 
 JOIN    = join:JoIn { return join.join(""); }
 JoIn    = [Jj][Oo][Ii][Nn]
+
+AND    = and:AnD { return and.join(""); }
+AnD    = [Aa][Nn][Dd]
 
 star    = "*"
 comma   = ","

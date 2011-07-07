@@ -14,14 +14,13 @@ exports.selector = (sql, reflector, callback) ->
     if columns.length
       column = columns.shift()
       reflector column.table, (reflected) ->
-        for name in reflected
+        for name in reflected.columns
           qualifiedName = "#{column.table}.#{name}"
           if not seen[qualifiedName]
             seen[qualifiedName] = true
-            selected.push "#{qualifiedName} AS #{name}"
+            selected.push "#{qualifiedName} AS #{column.table}__#{name}"
         reflect()
     else
-      console.log "HERE"
       rewrite = []
       rewrite.push "SELECT"
       rewrite.push selected.join(", ")

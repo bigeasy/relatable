@@ -93,9 +93,11 @@ class exports.ParserTest extends TwerpTest
           , "name": "b"
           }
         , "conditions":
-          { "left": "a.id"
-          , "right":"b.a_id"
-          }
+          [
+            { "left": "a.id"
+            , "right":"b.a_id"
+            }
+          ]
         }
       ]
     , "rest": ""
