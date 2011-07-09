@@ -1,4 +1,4 @@
-selectamundo = require "selectamundo"
+selectamundo = require "relatable"
 fs = require "fs"
 {Client} = require "mysql"
 {TwerpTest} = require "twerp"
