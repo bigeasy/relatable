@@ -1,0 +1,5 @@
+{   "name":             "relatable"
+,   "version":          "0.0.1"
+,   "author":           "Alan Gutierrez"
+,   "main":             "./lib/relatable.js"
+}
