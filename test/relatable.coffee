@@ -1,4 +1,4 @@
-selectamundo = require "relatable"
+relatable = require "relatable"
 fs = require "fs"
 {Client} = require "mysql"
 {TwerpTest} = require "twerp"
@@ -29,18 +29,34 @@ reflector = (table, callback) ->
         callback schema
 
 
-class exports.SelectaMundoTest extends TwerpTest
+class exports.RelatableTest extends TwerpTest
   'test: simple query': (done) ->
-    try
-      selectamundo.selector "SELECT * FROM Product", reflector, (sql, treeify) =>
-        expected = """
-          SELECT Product.id AS Product__id,
-                 Product.manufacturerId AS Product__manufacturerId,
-                 Product.manufacturerCode AS Product__manufacturerCode,
-                 Product.name AS Product__name
-            FROM Product
-        """.trim().replace(/\s+/g, ' ')
-        @equal expected, sql.trim().replace(/\s+/g, ' ')
-        done 1
-    catch e
-      console.log e.stack
+    relatable.selector "SELECT * FROM Product", reflector, (sql, treeify) =>
+      expected = """
+        SELECT Product.id AS Product__id,
+               Product.manufacturerId AS Product__manufacturerId,
+               Product.manufacturerCode AS Product__manufacturerCode,
+               Product.name AS Product__name
+          FROM Product
+      """.trim().replace(/\s+/g, ' ')
+      @equal expected, sql.trim().replace(/\s+/g, ' ')
+      done 1
+
+  'test: simple join': (done) ->
+    relatable.selector """
+      SELECT *
+        FROM Product
+        JOIN Manufacturer ON Product.manufacturerId = Manufacturer.id
+    """, reflector, (sql, treeify) =>
+      expected = """
+        SELECT Product.id AS Product__id,
+               Product.manufacturerId AS Product__manufacturerId,
+               Product.manufacturerCode AS Product__manufacturerCode,
+               Product.name AS Product__name,
+               Manufacturer.id AS Product__Manufacturer__id,
+               Manufacturer.name AS Product__Manufacturer__name
+          FROM Product
+          JOIN Manufacturer ON Product.manufacturerId = Manufacturer.id
+      """.trim().replace(/\s+/g, ' ')
+      @equal expected, sql.trim().replace(/\s+/g, ' ')
+      done 1
