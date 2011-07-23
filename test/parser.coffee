@@ -1,5 +1,5 @@
 {TwerpTest} = require "twerp"
-{parser}    = require "parser"
+{parser}    = require "grammar"
 
 class exports.ParserTest extends TwerpTest
   'test: parse a minimal select statement': (done) ->

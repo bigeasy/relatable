@@ -1,4 +1,4 @@
-{parser} = require "./parser.js"
+{parser} = require "./grammar.js"
 
 exports.selector = (sql, reflector, callback) ->
   tree = parser.parse sql
