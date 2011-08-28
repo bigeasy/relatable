@@ -129,7 +129,7 @@ class Scanner
           @tokens.push
             before: @before.join ""
             value: "*"
-            type: "*"
+            type: "all"
           match = /^\*(\s*)(,?\s*)([^\u0000]+)/.exec @rest
           [ before, comma, @rest ] = match.slice(1)
           @before = [ before, comma or "" ]
@@ -174,14 +174,14 @@ class Scanner
             @before.push name
             @before.push paren
           else
+            @token { value: name, alias: name, name, type: "table" }
+            @before = [ paren ]
             conditions = []
             if index != 0
               @next /^(ON\s+)([^\u0000]*)$/, "ON expected"
               @qualifiedName { type: "left", index }
               @next /^(=\s*)([^\u0000]*)$/, "= expected"
               @qualifiedName { type: "right", index }
-            else
-              @token { value: name, name, type: "table" }
 
       if not match = /^(join\s+)([^\u0000]*)$/i.exec @rest
         break
