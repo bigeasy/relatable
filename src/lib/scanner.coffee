@@ -96,6 +96,7 @@ class Scanner
     # Let's get past SELECT and DISINCT.
     @tokens = []
     @before = []
+    @value = []
     match = ///
       ^
       (
@@ -126,9 +127,9 @@ class Scanner
     loop
       switch @rest[0]
         when "*"
-          @tokens.push
-            before: @before.join ""
-            value: "*"
+          @value = [ "*" ]
+          # Can I make this one line?
+          @token
             type: "all"
           match = /^\*(\s*)(,?\s*)([^\u0000]+)/.exec @rest
           [ before, comma, @rest ] = match.slice(1)
@@ -138,17 +139,16 @@ class Scanner
           [ name, space, @rest ] = match.slice(1)
           switch @rest[0]
             when "."
-              value = [ name, space ]
+              @value = [ name, space ]
               table = name
               match = /^(\.\s*)(\*)(\s*)([^\u0000]*)/.exec @rest
               [ dot, name, space, @rest ] = match.slice(1)
-              value.push dot
-              value.push name
-              @tokens.push
-                before: @before.join ""
-                value: value.join ""
+              @value.push dot
+              @value.push name
+              @token
                 type: "tableAll"
                 table: table
+              @before.push space
           
       if @rest[0] isnt ','
         break
@@ -170,12 +170,18 @@ class Scanner
             @before.push name
             @before.push paren
             @skipParenthesis()
-          else if match = /^as\s+/.test @rest
-            @before.push name
-            @before.push paren
           else
-            @token { value: name, alias: name, name, type: "table" }
-            @before = [ paren ]
+            # When we want to pull quoted names, we only capture as.
+            if match = /^(as\s+)(\S+)([^\u0000]*)$/i.exec @rest
+              @value.push name
+              @value.push paren
+              [ as, alias, @rest ] = match.slice(1)
+              @value.push as
+              @value.push alias
+              @token { alias, name, type: "table" }
+            else
+              @token { value: name, alias: name, name, type: "table" }
+              @before = [ paren ]
             conditions = []
             if index != 0
               @next /^(ON\s+)([^\u0000]*)$/, "ON expected"
@@ -189,15 +195,19 @@ class Scanner
       @before.push before
       index++
 
-    @tokens.push
-      before: @rest
+    @token
+      value: @rest
       type: "rest"
 
     @tokens
 
   token: (token) ->
-    token.before = @before.join ""
+    token.before or= @before.join ""
     @before.length = 0
+
+    token.value or= @value.join ""
+    @value.length = 0
+
     @tokens.push token
 
   error: (message) -> message
