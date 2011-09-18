@@ -1,6 +1,6 @@
 scanner = require "./scanner"
 
-exports.selector = (sql, reflector, callback) ->
+exports.compile = (sql, reflector, callback) ->
   scan = scanner.scan sql
   all = false
   expansions = []
