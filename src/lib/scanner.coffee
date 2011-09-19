@@ -37,7 +37,7 @@ class Scanner
         value.push @bump()
         [ column, space ] = @identifier "column name expected"
         value.push column
-        @token merge fields, { value: value.join "", table, column }
+        @token merge fields, { value: value.join(""), table, column }
         @before = [ space ]
 
   skipParenthesis: ->

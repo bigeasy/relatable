@@ -5,7 +5,8 @@ exports.compile = (sql, reflector, callback) ->
   all = false
   expansions = []
   tables = []
-  for token in scan
+  parents = {}
+  for token, i in scan
     switch token.type
       when "all"
         expansions.push token
@@ -13,6 +14,14 @@ exports.compile = (sql, reflector, callback) ->
         tables.push table =
           token: token
           columns: []
+        if not pivot
+          pivot = token.alias
+        else
+          [ left, right ] = scan.slice(i + 1, i + 3)
+          if left.table is token.alias
+            parents[left.table] = right.table
+          else
+            parents[right.table] = left.table
   for expansion in expansions
     if expansion.type is "all"
       expansion.expansions = []
@@ -20,7 +29,6 @@ exports.compile = (sql, reflector, callback) ->
         expansion.expansions.push [ table.token.name, table.token.alias ]
   seen = {}
   selected = []
-  parents = {}
   reflect = ->
     if expansions[0].expansions.length
       [ table, alias ] = expansions[0].expansions.shift()

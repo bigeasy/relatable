@@ -40,8 +40,8 @@ class exports.ScannerTest extends TwerpTest
       { before: 'SELECT ', value: '*', type: 'all' },
       { value: 'a', alias: 'a', name: 'a', type: 'table', before: ' FROM ' },
       { value: 'b', alias: 'b', name: 'b', type: 'table', before: ' JOIN ' },
-      { type: 'left', index: 1, value: 'a.id', before: ' ON ' },
-      { type: 'right', index: 1, value: 'b.a_id', before: ' = ' },
+      { type: 'left', index: 1, value: 'a.id', before: ' ON ', table: 'a', column: 'id' },
+      { type: 'right', index: 1, value: 'b.a_id', before: ' = ', table: 'b', column: 'a_id' },
       { before: '', type: 'rest', value: '' } ]
     done 1
 

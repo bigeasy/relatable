@@ -63,6 +63,6 @@ class exports.CompilerTest extends TwerpTest
           FROM Product
           JOIN Manufacturer ON Product.manufacturerId = Manufacturer.id
       """.trim().replace(/\s+/g, ' ')
-      length = 175
+      length = 99999999999
       @equal expected.substring(0, length), sql.trim().replace(/\s+/g, ' ').substring(0, length)
       done 1
