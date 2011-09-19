@@ -36,7 +36,7 @@ reflector = (table, callback) ->
 
 class exports.CompilerTest extends TwerpTest
   'test: simple query': (done) ->
-    compiler.compile "SELECT * FROM Product", reflector, (sql, treeify) =>
+    compiler.compile "SELECT * FROM Product", reflector, (structure) =>
       expected = """
         SELECT Product.id AS Product__id,
                Product.manufacturerId AS Product__manufacturerId,
@@ -44,7 +44,7 @@ class exports.CompilerTest extends TwerpTest
                Product.name AS Product__name
           FROM Product
       """.trim().replace(/\s+/g, ' ')
-      @equal expected, sql.trim().replace(/\s+/g, ' ')
+      @equal expected, structure.sql.trim().replace(/\s+/g, ' ')
       done 1
 
   'test: simple join': (done) ->
@@ -52,7 +52,7 @@ class exports.CompilerTest extends TwerpTest
       SELECT *
         FROM Product
         JOIN Manufacturer ON Product.manufacturerId = Manufacturer.id
-    """, reflector, (sql, treeify) =>
+    """, reflector, (structure) =>
       expected = """
         SELECT Product.id AS Product__id,
                Product.manufacturerId AS Product__manufacturerId,
@@ -64,5 +64,5 @@ class exports.CompilerTest extends TwerpTest
           JOIN Manufacturer ON Product.manufacturerId = Manufacturer.id
       """.trim().replace(/\s+/g, ' ')
       length = 99999999999
-      @equal expected.substring(0, length), sql.trim().replace(/\s+/g, ' ').substring(0, length)
+      @equal expected.substring(0, length), structure.sql.trim().replace(/\s+/g, ' ').substring(0, length)
       done 1

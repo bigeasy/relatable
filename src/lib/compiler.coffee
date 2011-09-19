@@ -58,5 +58,5 @@ exports.compile = (sql, reflector, callback) ->
           when "table", "left", "right"
             sql.push token.before
             sql.push token.value or ""
-      callback(sql.join(""), ->)
+      callback({ sql: sql.join("") })
   reflect()
