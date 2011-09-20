@@ -45,7 +45,9 @@ class exports.CompilerTest extends TwerpTest
           FROM Product
       """.trim().replace(/\s+/g, ' ')
       @equal expected, structure.sql.trim().replace(/\s+/g, ' ')
-      done 1
+      @equal "Product", structure.pivot
+      @deepEqual {}, structure.parents
+      done 2
 
   'test: simple join': (done) ->
     compiler.compile """
@@ -65,4 +67,6 @@ class exports.CompilerTest extends TwerpTest
       """.trim().replace(/\s+/g, ' ')
       length = 99999999999
       @equal expected.substring(0, length), structure.sql.trim().replace(/\s+/g, ' ').substring(0, length)
-      done 1
+      @equal "Product", structure.pivot
+      @deepEqual { "Manufacturer": "Product" }, structure.parents
+      done 3
