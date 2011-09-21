@@ -1,6 +1,6 @@
 scanner = require "./scanner"
 
-exports.compile = (sql, reflector, callback) ->
+exports.compile = (sql, schema, callback) ->
   scan = scanner.scan sql
   all = false
   expansions = []
@@ -32,19 +32,18 @@ exports.compile = (sql, reflector, callback) ->
   reflect = ->
     if expansions[0].expansions.length
       [ table, alias ] = expansions[0].expansions.shift()
-      reflector table, (reflected) ->
-        for column in reflected.columns
-          qualifiedName = "#{alias}.#{column}"
-          if not seen[qualifiedName]
-            current = alias
-            prefix = []
-            while current?
-              prefix.push current
-              current = parents[current]
-            prefix.reverse()
-            prefix.push column
-            selected.push "#{qualifiedName} AS #{prefix.join("__")}"
-        reflect()
+      for column in schema[table]
+        qualifiedName = "#{alias}.#{column}"
+        if not seen[qualifiedName]
+          current = alias
+          prefix = []
+          while current?
+            prefix.push current
+            current = parents[current]
+          prefix.reverse()
+          prefix.push column
+          selected.push "#{qualifiedName} AS #{prefix.join("__")}"
+      reflect()
     else if expansions.length isnt 1
       expansions.shift()
       relfect()

@@ -10,6 +10,12 @@ createRelatable = ->
 class exports.PostgreSQLTest extends TwerpTest
   'test: simple query': (done) ->
     relatable = new Relatable(configuration.databases.postgresql)
-    relatable.select "SELECT * FROM Product", (results, fields) =>
-      @ok 1
+    relatable.select "SELECT * FROM product", (error, results) =>
+      @deepEqual [
+        { id: 1
+        , manufacturerId: 1
+        , manufacturerCode: 'A'
+        , name: 'Heavy Anvil'
+        }
+      ], results
       done 1
