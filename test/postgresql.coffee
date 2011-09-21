@@ -10,6 +10,6 @@ createRelatable = ->
 class exports.PostgreSQLTest extends TwerpTest
   'test: simple query': (done) ->
     relatable = new Relatable(configuration.databases.postgresql)
-    #relatable.select "SELECT * FROM Product", (results, fields) =>
-    @ok 1
-    done 1
+    relatable.select "SELECT * FROM Product", (results, fields) =>
+      @ok 1
+      done 1

@@ -33,7 +33,6 @@ reflector = (table, callback) ->
           SCHEMAS[table] = schema
           callback schema
 
-
 class exports.CompilerTest extends TwerpTest
   'test: simple query': (done) ->
     compiler.compile "SELECT * FROM Product", reflector, (structure) =>
