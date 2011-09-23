@@ -15,7 +15,7 @@ class exports.ScannerTest extends TwerpTest
     @deepEqual tree, [
       { before: 'SELECT ', value: '*', type: 'all' },
       { before: ' FROM ', alias: 'a', value: 'a', type: 'table', name: 'a' },
-      { value: 'WHERE id = ?', type: 'rest', before: ' ' } ]
+      { value: '', type: 'rest', before: ' WHERE id = ?' } ]
     done 1
 
   'test: scan table all': (done) ->
@@ -51,4 +51,18 @@ class exports.ScannerTest extends TwerpTest
       { before: 'SELECT ', value: '*', type: 'all' },
       { before: ' FROM ', alias: 'a', value: 'Aardvark AS a', type: 'table', name: 'Aardvark' },
       { before: '', type: 'rest', value: '' } ]
+    done 1
+
+  'test: scan one to many': (done) ->
+    tree = scanner.scan("SELECT * FROM a SELECT * FROM b ON a.id = b.a_id")
+    @deepEqual tree, [
+      {"type":"all","before":"SELECT ","value":"*"},
+      {"value":"a","alias":"a","name":"a","type":"table","before":" FROM "},
+      {"type":"rest","before":" ","value":""},
+      {"type":"all","before":"SELECT ","value":"*"},
+      {"value":"b","alias":"b","name":"b","type":"table","before":" FROM "},
+      {"type":"left","index":0,"value":"a.id","table":"a","column":"id","before":" ON "},
+      {"type":"right","index":0,"value":"b.a_id","table":"b","column":"a_id","before":" = "},
+      {"type":"rest","before":"","value":""}
+    ]
     done 1

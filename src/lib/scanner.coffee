@@ -44,7 +44,7 @@ class Scanner
     @before = []
     depth = 1
     while depth
-      # Can't find a closing curly brace.
+      # Can't find a closing parenthisis.
       if @rest.length is 0
         throw new Error @error "unmatched curly brace"
 
@@ -55,11 +55,9 @@ class Scanner
         ^
         (
           (?:
-            [^()"']+
+            [^()']+
             |
-            '(?:[^\\']|\\.)+'   # single quoted string
-            |
-            "(?:[^\\"]|\\.)+"   # double quoted string
+            '(?:[^']|'')+'   # single quoted string
           )*
         )
         ([^\u0000]*)
@@ -73,7 +71,7 @@ class Scanner
       if @rest.length is 0
         throw new Error @error "unmatched curly brace"
 
-      # Match either an opening curly brace or a closing curly brace before
+      # Match either an opening parenthesis or a closing parenthesis before
       # continuing with the loop.
       match = /^([()])([^\u0000]*)$/.exec @rest
       [ paren, @rest ] = match.slice 1
@@ -93,10 +91,13 @@ class Scanner
     fields
 
   scan: (@sql) ->
-    # Let's get past SELECT and DISINCT.
     @tokens = []
     @before = []
     @value = []
+    @_scan(@sql)
+
+  _scan: (@rest, join) ->
+    # Let's get past SELECT and DISINCT.
     match = ///
       ^
       (
@@ -116,7 +117,7 @@ class Scanner
         [^\u0000]*
       )
       $
-    ///i.exec @sql
+    ///i.exec @rest
     if not match
       throw new Error @error "badness"
     [ before, open, @rest ] = match.slice(1)
@@ -183,21 +184,54 @@ class Scanner
               @token { value: name, alias: name, name, type: "table" }
               @before = [ paren ]
             conditions = []
-            if index != 0
+            if index != 0 or join
               @next /^(ON\s+)([^\u0000]*)$/, "ON expected"
               @qualifiedName { type: "left", index }
               @next /^(=\s*)([^\u0000]*)$/, "= expected"
               @qualifiedName { type: "right", index }
 
-      if not match = /^(join\s+)([^\u0000]*)$/i.exec @rest
+      if not match = /^(JOIN\s+)([^\u0000]*)$/i.exec @rest
         break
       [ before, @rest ] = match.slice(1)
       @before.push before
       index++
 
-    @token
-      value: @rest
-      type: "rest"
+    loop
+      match = ///
+        ^
+        (
+          (?:
+            [^('sS]         # any other character
+            |
+            S(?!ELECT)      # s, but not select
+            |
+            '(?:[^']|'')*'  # string
+          )*
+        )
+        (
+          (
+            \(
+            |
+            SELECT
+          )?
+          [^\u0000]*
+        )
+        $
+      ///.exec @rest
+
+      [ before, @rest, select ] = match .slice(1)
+      @before.push before
+
+      if select?
+        if select is "("
+          @skipParenthesis()
+        else
+          @token type: "rest"
+          @_scan(@rest, true)
+          break
+      else
+        @token type: "rest"
+        break
 
     @tokens
 
