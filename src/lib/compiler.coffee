@@ -1,7 +1,39 @@
 scanner = require "./scanner"
+{extend} = require("coffee-script").helpers
+
+identifier = 0
 
 exports.compile = (sql, schema, callback) ->
   scan = scanner.scan sql
+
+  # Split the scan into separate select statements.
+  selects = [ [] ]
+  for part in scan
+    selects[0].push part
+    selects.unshift [] if part.type is "rest"
+  compileSelect [], selects.pop(), schema, (structure) ->
+    compileSelects [ structure ], selects, schema, callback
+
+compileSelects = (path, selects, schema, callback) ->
+  if selects.length is 1
+    callback(path[0])
+  else
+    compileSelect path, selects.pop(), schema, (structure, scan) ->
+      for part, i in scan
+        if part.type is "table"
+          break
+      pivot =
+        if scan[i + 1].table is part.alias
+          scan[i + 2]
+        else
+          scan[i + 1]
+      for i in [path.length - 1..0]
+        if path[i].pivot is pivot.table
+          path[i].joins.push structure
+          break
+      compileSelects path, selects, schema, callback
+
+compileSelect = (path, scan, schema, callback) ->
   all = false
   expansions = []
   tables = []
@@ -29,6 +61,7 @@ exports.compile = (sql, schema, callback) ->
         expansion.expansions.push [ table.token.name, table.token.alias ]
   seen = {}
   selected = []
+  structure = { temporary: "relatable_temporary_#{++identifier}" }
   reflect = ->
     if expansions[0].expansions.length
       [ table, alias ] = expansions[0].expansions.shift()
@@ -46,16 +79,36 @@ exports.compile = (sql, schema, callback) ->
       reflect()
     else if expansions.length isnt 1
       expansions.shift()
-      relfect()
+      reflect()
     else
       sql = []
       select = scan.shift()
       sql.push select.before
       sql.push selected.join(", ")
-      for token in scan
+      first = true
+      joined = null
+      for token, i in scan
         switch token.type
-          when "table", "left", "right"
+          when "table"
+            if path.length and first
+              pivot =
+                if scan[i + 1].table is token.alias
+                  scan[i + 2]
+                else
+                  scan[i + 1]
+              for i in [path.length - 1..0]
+                if path[i].pivot is pivot.table
+                  path[i].joins.push structure
+                  structure.joined = pivot.table
+                  sql.push " FROM #{path[i].temporary} AS #{path[i].pivot}"
+                  token.before = token.before.replace /^\s*FROM/i, " JOIN"
+                  break
             sql.push token.before
             sql.push token.value or ""
-      callback({ sql: sql.join(""), parents, pivot })
+            first = false
+          when "left", "right", "rest"
+            sql.push token.before
+            sql.push token.value or ""
+      extend(structure, { sql: sql.join(""), parents, pivot, joins: [] })
+      callback(structure, scan)
   reflect()

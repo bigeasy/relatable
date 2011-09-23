@@ -66,3 +66,31 @@ class exports.CompilerTest extends TwerpTest
         @equal "Product", structure.pivot
         @deepEqual { "Manufacturer": "Product" }, structure.parents
         done 3
+
+  'test: one to many': (done) ->
+    reflector (schema) =>
+      compiler.compile """
+        SELECT * FROM  Manufacturer AS manufacturer
+        SELECT *
+          FROM Product AS products ON products.manufacturerId = manufacturer.id
+      """, schema, (structure) =>
+        expected = """
+          SELECT manufacturer.id AS manufacturer__id,
+                 manufacturer.name AS manufacturer__name
+            FROM Manufacturer AS manufacturer
+        """.trim().replace(/\s+/g, ' ')
+        length = 2000
+        @equal expected.substring(0, length), structure.sql.trim().replace(/\s+/g, ' ').substring(0, length)
+        @equal "manufacturer", structure.pivot
+        @deepEqual {}, structure.parents
+        expected = """
+          SELECT products.id AS products__id,
+                 products.manufacturerId AS products__manufacturerId,
+                 products.manufacturerCode AS products__manufacturerCode,
+                 products.name AS products__name
+            FROM relatable_temporary_N AS manufacturer
+            JOIN Product AS products ON products.manufacturerId = manufacturer.id
+        """.trim().replace(/\s+/g, ' ')
+        length = 330
+        @equal expected.substring(0, length), structure.joins[0].sql.trim().replace(/relatable_temporary_\d+/, "relatable_temporary_N").replace(/\s+/g, ' ').substring(0, length)
+        done 4

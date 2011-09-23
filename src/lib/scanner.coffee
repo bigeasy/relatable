@@ -173,13 +173,14 @@ class Scanner
             @skipParenthesis()
           else
             # When we want to pull quoted names, we only capture as.
-            if match = /^(as\s+)(\S+)([^\u0000]*)$/i.exec @rest
+            if match = /^(as\s+)(\S+)(\s*)([^\u0000]*)$/i.exec @rest
               @value.push name
               @value.push paren
-              [ as, alias, @rest ] = match.slice(1)
+              [ as, alias, after, @rest ] = match.slice(1)
               @value.push as
               @value.push alias
               @token { alias, name, type: "table" }
+              @before.push after
             else
               @token { value: name, alias: name, name, type: "table" }
               @before = [ paren ]

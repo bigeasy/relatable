@@ -66,3 +66,15 @@ class exports.ScannerTest extends TwerpTest
       {"type":"rest","before":"","value":""}
     ]
     done 1
+
+  'test: scan one to many with aliases': (done) ->
+    tree = scanner.scan("SELECT * FROM a AS c SELECT * FROM b AS d ON c.id = d.a_id")
+    @deepEqual tree[0], {"type":"all","before":"SELECT ","value":"*"}
+    @deepEqual tree[1], {"value":"a AS c","alias":"c","name":"a","type":"table","before":" FROM "}
+    @deepEqual tree[2], {"type":"rest","before":" ","value":""}
+    @deepEqual tree[3], {"type":"all","before":"SELECT ","value":"*"}
+    @deepEqual tree[4], {"value":"b AS d","alias":"d","name":"b","type":"table","before":" FROM "}
+    @deepEqual tree[5], {"type":"left","index":0,"value":"c.id","table":"c","column":"id","before":" ON "}
+    @deepEqual tree[6], {"type":"right","index":0,"value":"d.a_id","table":"d","column":"a_id","before":" = "}
+    @deepEqual tree[7], {"type":"rest","before":"","value":""}
+    done 8
