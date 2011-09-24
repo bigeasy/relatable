@@ -34,21 +34,48 @@ class exports.Relatable
     else
       name
   
+  _gather: (connection, sql, structure, parameters, callback) ->
+    connection.sql sql, parameters, (error, results) =>
+      throw error if error
+      if not error
+        if structure.pivot
+          expanded = []
+          for result in results.rows
+            expanded.push @_treeify result, structure.pivot
+        else
+          expanded = results.rows
+      connection.close()
+      callback(error, expanded)
+
+  _temporary: (connection, prepare, callback) ->
+    if prepare.length
+      connection.sql.apply connection, prepare.shift().concat (error, results) =>
+        if error
+          callback error
+        else
+          @_temporary connection, prepare, callback
+    else
+      callback()
+
   select: (sql, splat...) ->
     callback = splat.pop()
     @_engine.connect (error, schema, connection) =>
       compiler.compile sql, schema, (structure) =>
-        connection.sql structure.sql, splat, (error, results) =>
-          throw error if error
-          if not error
-            if structure.pivot
-              expanded = []
-              for result in results.rows
-                expanded.push @_treeify result, structure.pivot
+        if structure.joins.length
+          prepare = @_engine.temporary structure, splat
+          @_temporary connection, prepare, (error) =>
+            if error
+              callback error
             else
-              expanded = results.rows
-          connection.close()
-          callback(error, expanded)
+              sql = """
+                SELECT *
+                  FROM #{structure.temporary}
+                 ORDER
+                    BY #{structure.temporary}_row_number
+              """
+              @_gather connection, sql, structure, [], callback
+        else
+          @_gather connection, structure.sql, structure, splat, callback
 
   _treeify: (record, get) ->
     tree = {}

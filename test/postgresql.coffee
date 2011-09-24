@@ -19,3 +19,16 @@ class exports.PostgreSQLTest extends TwerpTest
         }
       ], results
       done 1
+  'test: one to many': (done) ->
+    relatable = new Relatable(configuration.databases.postgresql)
+    relatable.select """
+        SELECT * FROM  manufacturer
+        SELECT *
+          FROM product AS products ON products.manufacturer_id = manufacturer.id
+      """, (error, results) =>
+        @deepEqual [
+          { id: 1
+          , name: 'Acme'
+          }
+        ], results
+        done 1

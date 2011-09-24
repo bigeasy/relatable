@@ -21,6 +21,19 @@ class exports.Engine
     else
       callback @_schema
 
+  temporary: (structure, parameters) ->
+    create = """
+      CREATE TEMPORARY SEQUENCE #{structure.temporary}_seq
+    """
+    sql = structure.sql.replace /^\s*SELECT/, """
+      CREATE TEMPORARY TABLE #{structure.temporary} AS
+      SELECT NEXTVAL('#{structure.temporary}_seq') AS #{structure.temporary}_row_number,   
+    """
+    drop = """
+      DROP SEQUENCE #{structure.temporary}_seq
+    """
+    [ [ create, [] ], [ sql, parameters ], [ drop, [] ] ]
+
   connect: (callback) ->
     @schema (schema) =>
       @_connect (error, connection) =>
