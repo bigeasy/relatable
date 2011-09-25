@@ -19,18 +19,6 @@ compileSelects = (path, selects, schema, callback) ->
     callback(path[0])
   else
     compileSelect path, selects.pop(), schema, (structure, scan) ->
-      for part, i in scan
-        if part.type is "table"
-          break
-      pivot =
-        if scan[i + 1].table is part.alias
-          scan[i + 2]
-        else
-          scan[i + 1]
-      for i in [path.length - 1..0]
-        if path[i].pivot is pivot.table
-          path[i].joins.push structure
-          break
       compileSelects path, selects, schema, callback
 
 compileSelect = (path, scan, schema, callback) ->
@@ -86,23 +74,28 @@ compileSelect = (path, scan, schema, callback) ->
       sql.push select.before
       sql.push selected.join(", ")
       first = true
-      joined = null
+      structure.join = null
       for token, i in scan
         switch token.type
           when "table"
             if path.length and first
-              pivot =
+              [ join, pivot ] =
                 if scan[i + 1].table is token.alias
-                  scan[i + 2]
+                  [ scan[i + 2], scan[i + 1] ]
                 else
-                  scan[i + 1]
+                  [ scan[i + 1], scan[i + 2] ]
               for i in [path.length - 1..0]
-                if path[i].pivot is pivot.table
+                if path[i].pivot is join.table
                   path[i].joins.push structure
-                  structure.joined = pivot.table
+                  structure.join =
+                    table: path[i].pivot
+                    fields: {}
+                  structure.join.fields[join.column] = pivot.column
                   sql.push " FROM #{path[i].temporary} AS #{path[i].pivot}"
                   token.before = token.before.replace /^\s*FROM/i, " JOIN"
                   break
+              pivot = pivot.table
+              join.value = "#{join.table}.#{join.table}__#{join.column}"
             sql.push token.before
             sql.push token.value or ""
             first = false

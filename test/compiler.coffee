@@ -89,8 +89,13 @@ class exports.CompilerTest extends TwerpTest
                  products.manufacturerCode AS products__manufacturerCode,
                  products.name AS products__name
             FROM relatable_temporary_N AS manufacturer
-            JOIN Product AS products ON products.manufacturerId = manufacturer.id
+            JOIN Product AS products ON products.manufacturerId = manufacturer.manufacturer__id
         """.trim().replace(/\s+/g, ' ')
         length = 330
         @equal expected.substring(0, length), structure.joins[0].sql.trim().replace(/relatable_temporary_\d+/, "relatable_temporary_N").replace(/\s+/g, ' ').substring(0, length)
+        @equal "products", structure.joins[0].pivot
+        @deepEqual {
+          table: "manufacturer",
+          fields: { id: "manufacturerId" }
+        }, structure.joins[0].join
         done 4

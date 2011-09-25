@@ -26,9 +26,11 @@ class exports.PostgreSQLTest extends TwerpTest
         SELECT *
           FROM product AS products ON products.manufacturer_id = manufacturer.id
       """, (error, results) =>
+        throw error if error
         @deepEqual [
           { id: 1
           , name: 'Acme'
+          , products: [{ id:1,  manufacturerId:1, manufacturerCode: "A", name:"Heavy Anvil" }]
           }
         ], results
         done 1

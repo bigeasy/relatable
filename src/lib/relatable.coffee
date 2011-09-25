@@ -1,5 +1,108 @@
 compiler = require "./compiler"
 
+class Selection
+  constructor: (@relatable, @schema, @connection, @sql, @parameters, @callback) ->
+    @cleanup = []
+    @completed = {}
+
+  execute: ->
+    compiler.compile @sql, @schema, (structure) =>
+      if Array.isArray @parameters
+        parameters = {}
+        parameters[structure.pivot] = @parameters
+        @parameters = parameters
+      @select [ structure ]
+
+  complete: ->
+    if @cleanup.length
+      @connection.sql @cleanup.shift(), [], (error, results) =>
+        if error
+          @callback error
+        else
+          @complete()
+    else
+      @connection.close()
+      @callback null, @results
+  
+  join: (structures, expanded) ->
+    structure = structures.shift()
+    @completed[structure.pivot] = expanded
+    for join in structure.joins
+      structures.push join
+    if structures.length
+      @select structures
+    else
+      @complete()
+
+  gather: (sql, structures, parameters) ->
+    @connection.sql sql, parameters, (error, results) =>
+      if error
+        @callback error
+      else
+        if pivot = structures[0].pivot
+          expanded = []
+          for result in results.rows
+            expanded.push @treeify result, pivot
+        else
+          expanded = results.rows
+        if pivot and structures[0].join
+          join = structures[0].join
+          fields = join.fields
+          map = {}
+          keys = Object.keys fields
+          for record in @completed[join.table]
+            current = map
+            for i in [0...keys.length - 1]
+              current = current[record[keys[i]]] or= {}
+            current[record[@relatable._toJavaScript keys[keys.length - 1]]] = record
+          for record in expanded
+            current = map
+            for i in [0...keys.length - 1]
+              current = current[record[fields[keys[i]]]] or= {}
+            parent = current[record[@relatable._toJavaScript fields[keys[keys.length - 1]]]]
+            (parent[pivot] or= []).push(record)
+        else
+          @results = expanded
+        @join structures, expanded
+
+  temporary: (structures, prepare) ->
+    if prepare.length
+      @connection.sql.apply @connection, prepare.shift().concat (error, results) =>
+        if error
+          @callback error
+        else
+          @temporary structures, prepare
+    else
+      sql = """
+        SELECT *
+          FROM #{structures[0].temporary}
+         ORDER
+            BY #{structures[0].temporary}_row_number
+      """
+      @gather sql, structures, []
+
+  select: (structures) ->
+    parameters = @parameters[structures[0].pivot] or []
+    if structures[0].joins.length
+      prepare = @relatable._engine.temporary structures[0], parameters
+      @cleanup.push """
+        DROP TABLE #{structures[0].temporary}
+      """
+      @temporary structures, prepare
+    else
+      @gather structures[0].sql, structures, parameters
+
+  treeify: (record, get) ->
+    tree = {}
+    for key, value of record
+      parts = key.split /__/
+      branch = tree
+      for i in [0...parts.length - 1]
+        part = @relatable._toJavaScript parts[i]
+        branch = branch[part] = branch[part] or {}
+      branch[@relatable._toJavaScript parts[parts.length - 1]] = record[key]
+    tree[get]
+
 class exports.Relatable
   constructor: (configuration) ->
     @_engine    = new (require(configuration.engine).Engine)(configuration)
@@ -33,57 +136,14 @@ class exports.Relatable
       lower.join("")
     else
       name
-  
-  _gather: (connection, sql, structure, parameters, callback) ->
-    connection.sql sql, parameters, (error, results) =>
-      throw error if error
-      if not error
-        if structure.pivot
-          expanded = []
-          for result in results.rows
-            expanded.push @_treeify result, structure.pivot
-        else
-          expanded = results.rows
-      connection.close()
-      callback(error, expanded)
 
-  _temporary: (connection, prepare, callback) ->
-    if prepare.length
-      connection.sql.apply connection, prepare.shift().concat (error, results) =>
-        if error
-          callback error
-        else
-          @_temporary connection, prepare, callback
-    else
-      callback()
-
-  select: (sql, splat...) ->
-    callback = splat.pop()
+  select: (sql, parameters...) ->
+    callback = parameters.pop()
+    if parameters.length is 1 and typeof parameters[0] is "object"
+      parameters = parameters[0]
     @_engine.connect (error, schema, connection) =>
-      compiler.compile sql, schema, (structure) =>
-        if structure.joins.length
-          prepare = @_engine.temporary structure, splat
-          @_temporary connection, prepare, (error) =>
-            if error
-              callback error
-            else
-              sql = """
-                SELECT *
-                  FROM #{structure.temporary}
-                 ORDER
-                    BY #{structure.temporary}_row_number
-              """
-              @_gather connection, sql, structure, [], callback
-        else
-          @_gather connection, structure.sql, structure, splat, callback
-
-  _treeify: (record, get) ->
-    tree = {}
-    for key, value of record
-      parts = key.split /__/
-      branch = tree
-      for i in [0...parts.length - 1]
-        part = @_toJavaScript parts[i]
-        branch = branch[part] = branch[part] or {}
-      branch[@_toJavaScript parts[parts.length - 1]] = record[key]
-    tree[get]
+      if error
+        callback error
+      else
+        selection = new Selection(@, schema, connection, sql, parameters, callback)
+        selection.execute()
