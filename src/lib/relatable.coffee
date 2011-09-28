@@ -119,13 +119,30 @@ class Mutator
   constructor: (@relatable) ->
     @operations = []
 
+  _subset: (object, keys) ->
+    subset = {}
+    for key in keys
+      subset[key] = object[key]
+    subset
+
   insert: (table, returning..., object) ->
     @operations.push { type: "insert", table, returning, object }
 
   update: (table, where..., object) ->
     if where.length is 1 and typeof where[0] is "object"
       where = where[0]
+    else
+      where = @_subset object, where
+      set = Object.keys(object).filter((key) -> where[key] is undefined)
+      object = @_subset object, set
     @operations.push { type: "update", table, where, object }
+
+  delete: (table, where..., object) ->
+    if where.length is 0
+      where = object
+    else
+      where = @_subset object, where
+    @operations.push { type: "delete", table, where }
 
   execute: (callback) ->
     @relatable._engine.connect (error, schema, connection) =>

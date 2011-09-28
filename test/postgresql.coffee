@@ -81,3 +81,33 @@ class exports.PostgreSQLTest extends TwerpTest
             @equal "Axme", results[0].name
             @equal "Axme", results[1].name
             done 4
+
+  'test: delete extract': (done) ->
+    relatable = new Relatable(configuration.databases.postgresql)
+    @resetManufacturer relatable, =>
+      mutator = relatable.mutate()
+      relatable.sql "INSERT INTO manufacturer (name) VALUES('Yoyodyne')", (error) =>
+        throw error if error
+        mutator.delete "Manufacturer", "name", { name: "Yoyodyne" }
+        mutator.execute (error, results) =>
+          throw error if error
+          @equal 1, results[0].count
+          relatable.select "SELECT * FROM manufacturer", (error, results) =>
+            @equal 1, results.length
+            @equal "Acme", results[0].name
+            done 3
+
+  'test: delete specified': (done) ->
+    relatable = new Relatable(configuration.databases.postgresql)
+    @resetManufacturer relatable, =>
+      mutator = relatable.mutate()
+      relatable.sql "INSERT INTO manufacturer (name) VALUES('Yoyodyne')", (error) =>
+        throw error if error
+        mutator.delete "Manufacturer", { name: "Yoyodyne" }
+        mutator.execute (error, results) =>
+          throw error if error
+          @equal 1, results[0].count
+          relatable.select "SELECT * FROM manufacturer", (error, results) =>
+            @equal 1, results.length
+            @equal "Acme", results[0].name
+            done 3

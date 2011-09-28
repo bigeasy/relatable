@@ -57,42 +57,41 @@ class Connection
     @_client.query query, parameters, callback
 
   insert: (mutation, operation) ->
+    relatable = mutation.mutator.relatable
     { table, returning, object } = operation
-    keys = Object.keys(object)
-    params = ("$#{i + 1}" for key, i in keys)
-    sql = """
-      INSERT INTO #{mutation.mutator.relatable._toSQL table} (#{keys.join(", ")})
-      VALUES(#{params.join(", ")})
-    """
-    if returning.length
-      sql += " RETURNING #{returning.join(",")}"
 
-    @sql sql, (object[key] for key in keys), (error, results) ->
+    keys = Object.keys(object)
+    sql = """
+      INSERT INTO #{relatable._toSQL table} (
+        #{keys.map((k) -> relatable._toSQL k).join(", ")}
+      )
+      VALUES(#{keys.map((k, i) -> "$#{i + 1}").join(", ")})
+    """
+
+    if returning.length
+      sql += " RETURNING #{returning.map((k) -> relatable._toSQL k).join(", ")}"
+
+    parameters = keys.map((k) -> object[k])
+    @sql sql, parameters, (error, results) ->
       if error
         mutation.callback error
       else
         mutation.results.push results.rows[0]
         mutation.mutate()
 
-  _subset: (object, keys) ->
-    subset = {}
-    for key in keys
-      subset[key] = object[key]
-    subset
-
   update: (mutation, operation) ->
+    relatable = mutation.mutator.relatable
+
     { table, where, object } = operation
 
     updated = Object.keys(object)
-
-    if Array.isArray(where)
-      where = @_subset object, where
-      updated = updated.filter((key) -> where[key] is undefined )
-
     selected = Object.keys(where)
 
-    assignments = updated.map((k, i) -> "#{k} = $#{i + 1}")
-    conditions = selected.map((k, i) -> "#{k} = $#{i + 1 + updated.length}")
+    offset = 1
+    assignments = updated.map((k, i) -> "#{relatable._toSQL k} = $#{i + offset}")
+
+    offset += updated.length
+    conditions = selected.map((k, i) -> "#{relatable._toSQL k} = $#{i + offset}")
 
     sql = """
       UPDATE #{table}
@@ -104,6 +103,30 @@ class Connection
     for key in updated
       parameters.push object[key]
 
+    for key in selected
+      parameters.push where[key]
+
+    @sql sql, parameters, (error, results) ->
+      if error
+        mutation.callback error
+      else
+        mutation.results.push { count: results.rowCount }
+        mutation.mutate()
+
+  delete: (mutation, operation) ->
+    relatable = mutation.mutator.relatable
+
+    { table, where } = operation
+
+    selected = Object.keys(where)
+    conditions = selected.map((k, i) -> "#{relatable._toSQL k} = $#{i + 1}")
+
+    sql = """
+      DELETE FROM #{relatable._toSQL table}
+            WHERE #{conditions.join(" AND ")}
+    """
+
+    parameters = []
     for key in selected
       parameters.push where[key]
 
