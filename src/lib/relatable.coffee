@@ -103,6 +103,33 @@ class Selection
       branch[@relatable._toJavaScript parts[parts.length - 1]] = record[key]
     tree[get]
 
+class Mutation
+  constructor: (@mutator, @schema, @connection, @operations, @callback) ->
+    @results = []
+
+  mutate: ->
+    if @operations.length
+      operation = @operations.shift()
+      @connection[operation.type](@, operation)
+    else
+      @connection.close()
+      @callback null, @results
+
+class Mutator
+  constructor: (@relatable) ->
+    @operations = []
+
+  insert: (table, returning..., object) ->
+    @operations.push { type: "insert", table, returning, object }
+
+  execute: (callback) ->
+    @relatable._engine.connect (error, schema, connection) =>
+      if error
+        callback error
+      else
+        mutation = new Mutation(@, schema, connection, @operations, callback)
+        mutation.mutate()
+
 class exports.Relatable
   constructor: (configuration) ->
     @_engine    = new (require(configuration.engine).Engine)(configuration)
@@ -125,17 +152,17 @@ class exports.Relatable
 
   _toSQL: (field) ->
     if @_fixup
-      sql = [ name[i].toLowerCase() ]
-      for i in [1...name.length]
-        char = name[i]
+      sql = [ field[0].toLowerCase() ]
+      for i in [1...field.length]
+        char = field[i]
         lower = char.toLowerCase()
         upper = char.toUpperCase()
-        if lower != upper && upper = char
-          push.sql "_"
-        push.sql lower
-      lower.join("")
+        if lower isnt upper and upper is char
+          sql.push "_"
+        sql.push lower
+      sql.join("")
     else
-      name
+      field
 
   select: (sql, parameters...) ->
     callback = parameters.pop()
@@ -147,3 +174,19 @@ class exports.Relatable
       else
         selection = new Selection(@, schema, connection, sql, parameters, callback)
         selection.execute()
+
+  mutate: -> new Mutator(@)
+
+  sql: (sql, parameters..., callback) ->
+    if parameters.length and Array.isArray(parameters[0])
+      parameters = parameters[0]
+    @_engine.connect (error, schema, connection) =>
+      if error
+        callback error
+      else
+        connection.sql sql, parameters, (error, results) =>
+          if error
+            callback error
+          else
+            connection.close()
+            callback null, results

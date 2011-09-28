@@ -56,4 +56,22 @@ class Connection
   sql: (query, parameters, callback) ->
     @_client.query query, parameters, callback
 
+  insert: (mutation, operation) ->
+    { table, returning, object } = operation
+    keys = Object.keys(object)
+    params = ("$#{i + 1}" for key, i in keys)
+    sql = """
+      INSERT INTO #{mutation.mutator.relatable._toSQL table} (#{keys.join(", ")})
+      VALUES(#{params.join(", ")})
+    """
+    if returning.length
+      sql += " RETURNING #{returning.join(",")}"
+
+    @sql sql, (object[key] for key in keys), (error, results) ->
+      if error
+        mutation.callback error
+      else
+        mutation.results.push results.rows[0]
+        mutation.mutate()
+
   close: -> @_client.end()
