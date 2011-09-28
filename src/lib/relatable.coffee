@@ -122,6 +122,11 @@ class Mutator
   insert: (table, returning..., object) ->
     @operations.push { type: "insert", table, returning, object }
 
+  update: (table, where..., object) ->
+    if where.length is 1 and typeof where[0] is "object"
+      where = where[0]
+    @operations.push { type: "update", table, where, object }
+
   execute: (callback) ->
     @relatable._engine.connect (error, schema, connection) =>
       if error

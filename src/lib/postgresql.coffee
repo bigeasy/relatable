@@ -74,4 +74,44 @@ class Connection
         mutation.results.push results.rows[0]
         mutation.mutate()
 
+  _subset: (object, keys) ->
+    subset = {}
+    for key in keys
+      subset[key] = object[key]
+    subset
+
+  update: (mutation, operation) ->
+    { table, where, object } = operation
+
+    updated = Object.keys(object)
+
+    if Array.isArray(where)
+      where = @_subset object, where
+      updated = updated.filter((key) -> where[key] is undefined )
+
+    selected = Object.keys(where)
+
+    assignments = updated.map((k, i) -> "#{k} = $#{i + 1}")
+    conditions = selected.map((k, i) -> "#{k} = $#{i + 1 + updated.length}")
+
+    sql = """
+      UPDATE #{table}
+         SET #{assignments.join(", ")}
+       WHERE #{conditions.join(" AND ")}
+    """
+
+    parameters = []
+    for key in updated
+      parameters.push object[key]
+
+    for key in selected
+      parameters.push where[key]
+
+    @sql sql, parameters, (error, results) ->
+      if error
+        mutation.callback error
+      else
+        mutation.results.push { count: results.rowCount }
+        mutation.mutate()
+
   close: -> @_client.end()
