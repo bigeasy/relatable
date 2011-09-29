@@ -111,3 +111,18 @@ class exports.PostgreSQLTest extends TwerpTest
             @equal 1, results.length
             @equal "Acme", results[0].name
             done 3
+
+  'test: cache': (done) ->
+    relatable = new Relatable(configuration.databases.postgresql)
+    @resetManufacturer relatable, =>
+      relatable = relatable.cache()
+      sql = "SELECT * FROM manufacturer"
+      relatable.select sql, (error, results) =>
+        was = results
+        @equal 1, results.length
+        @equal "Acme", results[0].name
+        relatable.select sql, (error, results) =>
+          @ok results is was
+          @equal 1, results.length
+          @equal "Acme", results[0].name
+          done 5

@@ -212,3 +212,71 @@ class exports.Relatable
           else
             connection.close()
             callback null, results
+
+  cache: (engine) ->
+    new CachingRelatable(@, engine || new ForeverCache())
+
+  uncached: -> @
+
+  encache: ->
+
+  fetch: (key, callback) -> callback false
+
+class ForeverCache
+  constructor: -> @_map = {}
+  get: (key) -> @_map[key]
+  put: (key, value) -> @_map[key] = value
+
+class exports.Cache
+  constructor: (timeout) ->
+    @timeout = (timeout or 10)
+    @_map = {}
+    @_expires = {}
+
+  get: (key) ->
+    expires = @_expires[key]
+    if expires? and expires >= (new Date().getTime())
+      @_map[key]
+    else
+      null
+
+  put: (key, value) ->
+    @_expires[key] = (new Date().getTime() + @timeout * 1000)
+    @_map[key] = value
+
+class CachingRelatable
+  constructor: (@_relatable, @cache) ->
+
+  mutate: -> @_relatable.mutate()
+
+  sql: -> @_relatable.sql()
+
+  select: (sql, parameters..., callback) ->
+    query = [ sql ].concat(parameters)
+    key = []
+    for parameter in query
+      key.push encodeURIComponent parameter
+    key = key.join("&")
+    results = @cache.get(key)
+    if results
+      callback null, results
+    else
+      @_relatable.select.apply @_relatable, query.concat (error, results) =>
+        if error
+          callback error
+        else
+          @encache(key, results)
+          callback null, results
+
+  fetch: (key, callback) ->
+    value = @cache.get(key)
+    if not value
+      @_relatable.fetch(key, callback)
+    else
+      callback(true, value)
+
+  encache: (key, results) ->
+    @cache.put(key, results)
+    @_relatable.encache(key, results)
+
+  uncached: -> @_relatable.uncached()
