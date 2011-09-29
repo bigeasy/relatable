@@ -36,6 +36,16 @@ class exports.Engine
       else
         callback null, new Connection(client)
 
+  temporary: (structure, parameters) ->
+    set = """
+      SET @position = 0
+    """
+    sql = structure.sql.replace /^\s*SELECT/, """
+      CREATE TEMPORARY TABLE #{structure.temporary} AS
+      SELECT @position := @position + 1 AS #{structure.temporary}_row_number,   
+    """
+    [ [ set, [] ], [ sql, parameters ] ]
+
 class Connection
   constructor: (@_client) ->
 

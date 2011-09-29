@@ -41,7 +41,6 @@ class Scanner
         @before = [ space ]
 
   skipParenthesis: ->
-    @before = []
     depth = 1
     while depth
       # Can't find a closing parenthisis.
@@ -132,9 +131,15 @@ class Scanner
           # Can I make this one line?
           @token
             type: "all"
-          match = /^\*(\s*)(,?\s*)([^\u0000]+)/.exec @rest
-          [ before, comma, @rest ] = match.slice(1)
-          @before = [ before, comma or "" ]
+          match = /^\*(\s*)([^\u0000]+)/.exec @rest
+          [ before, @rest ] = match.slice(1)
+          @before = [ before or "" ]
+        when "("
+          @before.push @bump()
+          @skipParenthesis()
+          if match = /^(\s*AS\s+\S+\s*)([^\u0000]*)$/i.exec @rest
+            [ before, @rest ] = match.slice(1)
+            @before.push before
         else
           match = /^([^\s.(]+)(\s*)([^\u0000]+)/.exec @rest
           [ name, space, @rest ] = match.slice(1)
@@ -151,16 +156,19 @@ class Scanner
                 table: table
               @before.push space
           
-      if @rest[0] isnt ','
+      if @rest[0] isnt ","
         break
-      @rest = @rest.substring(@rest)
+      [ before, @rest ] = /^(,\s*)([^\u0000]*)/.exec(@rest).slice(1)
+      @before.push before
       
-    match = /^(FROM\s+)([^\u0000]*)$/i.exec @rest
+    match = /^(FROM)(\s+)([^\u0000]*)$/i.exec @rest
     if not match
       throw new Error @error "FROM expected"
-    [ from, @rest ] = match.slice(1)
+    [ from, before, @rest ] = match.slice(1)
+    @value.push from
+    @token type: "from"
+    @before.push before
     index = 0
-    @before.push from
     loop
       switch @rest[0]
         when ""
@@ -173,7 +181,7 @@ class Scanner
             @skipParenthesis()
           else
             # When we want to pull quoted names, we only capture as.
-            if match = /^(as\s+)(\S+)(\s*)([^\u0000]*)$/i.exec @rest
+            if match = /^(AS\s+)(\S+)(\s*)([^\u0000]*)$/i.exec @rest
               @value.push name
               @value.push paren
               [ as, alias, after, @rest ] = match.slice(1)
@@ -191,7 +199,7 @@ class Scanner
               @next /^(=\s*)([^\u0000]*)$/, "= expected"
               @qualifiedName { type: "right", index }
 
-      if not match = /^(JOIN\s+)([^\u0000]*)$/i.exec @rest
+      if not match = /^((?:LEFT\s+)?JOIN\s+)([^\u0000]*)$/i.exec @rest
         break
       [ before, @rest ] = match.slice(1)
       @before.push before
@@ -218,13 +226,14 @@ class Scanner
           [^\u0000]*
         )
         $
-      ///.exec @rest
+      ///i.exec @rest
 
       [ before, @rest, select ] = match .slice(1)
       @before.push before
 
       if select?
         if select is "("
+          @before.push @bump()
           @skipParenthesis()
         else
           @token type: "rest"

@@ -22,86 +22,127 @@ compileSelects = (path, selects, schema, callback) ->
       compileSelects path, selects, schema, callback
 
 compileSelect = (path, scan, schema, callback) ->
-  all = false
-  expansions = []
-  tables = []
-  parents = {}
+  [ all, expansions, tables, parents, selected ] = [ false, [], [], {}, {} ]
+
+  # In this loop we gather the field names that reference tables in our joins,
+  # as well as determine the treeified structure pivot point and the lineage of
+  # the joined tables.
   for token, i in scan
     switch token.type
       when "all"
+        all = true
+        expansions.push token
+      when "tableAll"
+        selected[token.table] = true
         expansions.push token
       when "table"
         tables.push table =
           token: token
           columns: []
-        if not pivot
-          pivot = token.alias
-        else
+        if all or selected[token.alias]
+          if not pivot
+            pivot = token.alias
+          else
+            [ left, right ] = scan.slice(i + 1, i + 3)
+            if left.table is token.alias
+              parents[left.table] = right.table
+            else
+              parents[right.table] = left.table
+        else if not through
           [ left, right ] = scan.slice(i + 1, i + 3)
           if left.table is token.alias
-            parents[left.table] = right.table
+            through = left
           else
-            parents[right.table] = left.table
+            through = right
+
+  # Table field wildcards will be expanded to reflect the tree structure of the
+  # treeified structure.
   for expansion in expansions
+    expansion.expansions = []
     if expansion.type is "all"
-      expansion.expansions = []
       for table in tables
         expansion.expansions.push [ table.token.name, table.token.alias ]
-  seen = {}
-  selected = []
+    else
+      for table in tables
+        if table.token.alias is expansion.table
+          expansion.expansions.push [ table.token.name, table.token.alias ]
+          break
+  
+  [ seen, selected, columns ] = [ {}, [], [] ]
   structure = { temporary: "relatable_temporary_#{++identifier}" }
-  reflect = ->
+  while expansions.length
     if expansions[0].expansions.length
       [ table, alias ] = expansions[0].expansions.shift()
       for column in schema[table]
         qualifiedName = "#{alias}.#{column}"
         if not seen[qualifiedName]
-          current = alias
-          prefix = []
-          while current?
-            prefix.push current
-            current = parents[current]
-          prefix.reverse()
-          prefix.push column
-          selected.push "#{qualifiedName} AS #{prefix.join("__")}"
-      reflect()
-    else if expansions.length isnt 1
-      expansions.shift()
-      reflect()
+          columns.push { qualifiedName, alias, column }
     else
-      sql = []
-      select = scan.shift()
-      sql.push select.before
-      sql.push selected.join(", ")
-      first = true
-      structure.join = null
-      for token, i in scan
-        switch token.type
-          when "table"
-            if path.length and first
-              [ join, pivot ] =
-                if scan[i + 1].table is token.alias
-                  [ scan[i + 2], scan[i + 1] ]
-                else
-                  [ scan[i + 1], scan[i + 2] ]
-              for i in [path.length - 1..0]
-                if path[i].pivot is join.table
-                  path[i].joins.push structure
-                  structure.join =
-                    table: path[i].pivot
-                    fields: {}
-                  structure.join.fields[join.column] = pivot.column
-                  sql.push " FROM #{path[i].temporary} AS #{path[i].pivot}"
-                  token.before = token.before.replace /^\s*FROM/i, " JOIN"
-                  break
-              pivot = pivot.table
-              join.value = "#{join.table}.#{join.table}__#{join.column}"
-            sql.push token.before
-            sql.push token.value or ""
-            first = false
-          when "left", "right", "rest"
-            sql.push token.before
-            sql.push token.value or ""
-      extend(structure, { sql: sql.join(""), parents, pivot, joins: [] })
-      callback(structure, scan)
-  reflect()
+      expansions.shift()
+
+  if through
+    parents[through.table] = pivot
+    columns.push
+      qualifiedName: "#{through.table}.#{through.column}"
+      alias: through.table
+      column: through.column
+
+  for select in columns
+    current = select.alias
+    prefix = []
+    while current?
+      prefix.push current
+      current = parents[current]
+    prefix.reverse()
+    prefix.push select.column
+    selected.push "#{select.qualifiedName} AS #{prefix.join("__")}"
+    
+  sql = []
+  from = select = scan.shift()
+  sql.push select.before
+  sql.push selected.join(", ")
+  first = true
+  structure.join = null
+
+  from = scan.shift() while from.type isnt "from"
+  token = scan.shift()
+
+  if path.length
+    [ join, first ] =
+      if scan[0].table is token.alias
+        [ scan[1], scan[0] ]
+      else
+        [ scan[0], scan[1] ]
+    for i in [path.length - 1..0]
+      if path[i].pivot is join.table
+        path[i].joins.push structure
+        structure.join =
+          table: path[i].pivot
+          fields: {}
+        if through
+          joined = "#{through.table}.#{through.column}"
+        else
+          joined = first.column
+        structure.join.fields[join.column] = joined
+        sql.push " FROM #{path[i].temporary} AS #{path[i].pivot}"
+        from.value = "JOIN"
+        break
+    join.value = "#{join.table}.#{join.table}__#{join.column}"
+
+  sql.push from.before
+  sql.push from.value
+  sql.push token.before
+  sql.push token.value
+
+  for token, i in scan
+    switch token.type
+      when "table"
+        sql.push token.before
+        sql.push token.value or ""
+      when "table", "left", "right", "rest"
+        sql.push token.before
+        sql.push token.value or ""
+
+  extend(structure, { sql: sql.join(""), parents, pivot, joins: [] })
+
+  callback(structure, scan)

@@ -34,6 +34,12 @@ class Selection
     else
       @complete()
 
+  _get: (record, key) ->
+    path = key.split /\./
+    while path.length > 1
+      record = record?[path.shift()]
+    record?[path.shift()]
+    
   gather: (sql, structures, parameters) ->
     @connection.sql sql, parameters, (error, results) =>
       if error
@@ -41,8 +47,12 @@ class Selection
       else
         if pivot = structures[0].pivot
           expanded = []
+          joins = structures[0].joins or []
           for result in results.rows or results
-            expanded.push @treeify result, pivot
+            tree = @treeify result, pivot
+            for join in joins
+              tree[join.pivot] = []
+            expanded.push tree
         else
           expanded = results.rows or results
         if pivot and structures[0].join
@@ -59,8 +69,8 @@ class Selection
             current = map
             for i in [0...keys.length - 1]
               current = current[record[fields[keys[i]]]] or= {}
-            parent = current[record[@relatable._toJavaScript fields[keys[keys.length - 1]]]]
-            (parent[pivot] or= []).push(record)
+            parent = current[@_get(record, @relatable._toJavaScript fields[keys[keys.length - 1]])]
+            parent[pivot].push(record)
         else
           @results = expanded
         @join structures, expanded

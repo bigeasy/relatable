@@ -126,3 +126,27 @@ class exports.PostgreSQLTest extends TwerpTest
           @equal 1, results.length
           @equal "Acme", results[0].name
           done 5
+
+  'test: through join table': (done) ->
+    relatable = new Relatable(configuration.databases.postgresql)
+    relatable.select """
+        SELECT * FROM sale
+        SELECT products.*
+          FROM sale_item AS item ON item.sale_id = sale.id
+          JOIN product AS products ON products.manufacturer_id = item.manufacturer_id
+                                  AND products.manufacturer_code = item.manufacturer_code
+      """, (error, results) =>
+        @deepEqual [ {
+          id: 1,
+          customerId: 1,
+          products: [
+            {
+              id: 1,
+              manufacturerId: 1,
+              manufacturerCode: "A",
+              name: "Heavy Anvil",
+              item: { saleId: 1 }
+            }
+          ]
+        } ], results
+        done 1

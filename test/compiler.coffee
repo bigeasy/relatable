@@ -99,3 +99,37 @@ class exports.CompilerTest extends TwerpTest
           fields: { id: "manufacturerId" }
         }, structure.joins[0].join
         done 4
+
+  'test: through join table': (done) ->
+    reflector (schema) =>
+      compiler.compile """
+        SELECT * FROM Sale AS sale
+        SELECT products.*
+          FROM SaleItem AS item ON item.saleId = sale.id
+          JOIN Product AS products ON products.manufacturerId = item.manufacturerId
+                                  AND products.manufacturerCode = item.manufacturerCode
+      """, schema, (structure) =>
+        expected = """
+          SELECT sale.id AS sale__id,
+                 sale.customerId AS sale__customerId
+            FROM Sale AS sale
+        """.trim().replace(/\s+/g, ' ')
+        length = 1000
+        @equal expected.substring(0, length), structure.sql.trim().replace(/\s+/g, ' ').substring(0, length)
+        expected = """
+          SELECT products.id AS products__id,
+                 products.manufacturerId AS products__manufacturerId,
+                 products.manufacturerCode AS products__manufacturerCode,
+                 products.name AS products__name,
+                 item.saleId AS products__item__saleId
+            FROM relatable_temporary_N AS sale
+            JOIN SaleItem AS item ON item.saleId = sale.sale__id
+            JOIN Product AS products ON products.manufacturerId = item.manufacturerId
+                                    AND products.manufacturerCode = item.manufacturerCode
+        """.trim().replace(/\s+/g, ' ')
+        length = 490
+        @equal expected.substring(0, length), structure.joins[0].sql.trim().replace(/relatable_temporary_\d+/, "relatable_temporary_N").replace(/\s+/g, ' ').substring(0, length)
+        @equal "products", structure.joins[0].pivot
+        @equal "sale", structure.joins[0].join.table
+        @deepEqual { "id": "item.saleId" }, structure.joins[0].join.fields
+        done 5
