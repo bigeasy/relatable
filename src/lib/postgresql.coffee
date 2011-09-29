@@ -1,6 +1,5 @@
 pg = require "pg"
 
-SCHEMAS = {}
 class exports.Engine
   constructor: (@_configuration) ->
 
@@ -37,7 +36,7 @@ class exports.Engine
   connect: (callback) ->
     @schema (schema) =>
       @_connect (error, connection) =>
-        callback(null, schema, connection)
+        callback(error, schema, connection)
 
   _connect: (callback) ->
     client = new (pg.Client)(@_configuration)
@@ -46,9 +45,6 @@ class exports.Engine
     client.on "error", (error) =>
       callback(error)
     client.connect()
-
-  reflector: ->
-    (table, callback) =>
 
 class Connection
   constructor: (@_client) ->

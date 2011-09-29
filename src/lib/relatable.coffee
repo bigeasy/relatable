@@ -41,10 +41,10 @@ class Selection
       else
         if pivot = structures[0].pivot
           expanded = []
-          for result in results.rows
+          for result in results.rows or results
             expanded.push @treeify result, pivot
         else
-          expanded = results.rows
+          expanded = results.rows or results
         if pivot and structures[0].join
           join = structures[0].join
           fields = join.fields
