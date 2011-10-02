@@ -1,4 +1,5 @@
 pg = require "pg"
+{Mutator} = require "./engine"
 
 class exports.Engine
   constructor: (@_configuration) ->
@@ -46,91 +47,26 @@ class exports.Engine
       callback(error)
     client.connect()
 
-class Connection
+class Connection extends Mutator
   constructor: (@_client) ->
 
   sql: (query, parameters, callback) ->
     @_client.query query, parameters, callback
 
-  insert: (mutation, operation) ->
-    relatable = mutation.mutator.relatable
-    { table, returning, object } = operation
-
-    keys = Object.keys(object)
-    sql = """
-      INSERT INTO #{relatable._toSQL table} (
-        #{keys.map((k) -> relatable._toSQL k).join(", ")}
-      )
-      VALUES(#{keys.map((k, i) -> "$#{i + 1}").join(", ")})
-    """
-
-    if returning.length
-      sql += " RETURNING #{returning.map((k) -> relatable._toSQL k).join(", ")}"
-
-    parameters = keys.map((k) -> object[k])
-    @sql sql, parameters, (error, results) ->
-      if error
-        mutation.callback error
-      else
-        mutation.results.push results.rows[0]
-        mutation.mutate()
-
-  update: (mutation, operation) ->
-    relatable = mutation.mutator.relatable
-
-    { table, where, object } = operation
-
-    updated = Object.keys(object)
-    selected = Object.keys(where)
-
-    offset = 1
-    assignments = updated.map((k, i) -> "#{relatable._toSQL k} = $#{i + offset}")
-
-    offset += updated.length
-    conditions = selected.map((k, i) -> "#{relatable._toSQL k} = $#{i + offset}")
-
-    sql = """
-      UPDATE #{table}
-         SET #{assignments.join(", ")}
-       WHERE #{conditions.join(" AND ")}
-    """
-
-    parameters = []
-    for key in updated
-      parameters.push object[key]
-
-    for key in selected
-      parameters.push where[key]
-
-    @sql sql, parameters, (error, results) ->
-      if error
-        mutation.callback error
-      else
-        mutation.results.push { count: results.rowCount }
-        mutation.mutate()
-
-  delete: (mutation, operation) ->
-    relatable = mutation.mutator.relatable
-
-    { table, where } = operation
-
-    selected = Object.keys(where)
-    conditions = selected.map((k, i) -> "#{relatable._toSQL k} = $#{i + 1}")
-
-    sql = """
-      DELETE FROM #{relatable._toSQL table}
-            WHERE #{conditions.join(" AND ")}
-    """
-
-    parameters = []
-    for key in selected
-      parameters.push where[key]
-
-    @sql sql, parameters, (error, results) ->
-      if error
-        mutation.callback error
-      else
-        mutation.results.push { count: results.rowCount }
-        mutation.mutate()
-
   close: -> @_client.end()
+
+  _returning: (relatable, sql, returning) ->
+    if returning.length > 1
+      throw new Error "can only return one value"
+    sql + " RETURNING #{returning.map((k) -> relatable._toSQL k).join(", ")}"
+
+  _placeholder: (i) -> "$#{i + 1}"
+
+  _inserted: (mutation, results, returning) ->
+    mutation.results.push results.rows[0]
+
+  _updated: (mutation, results) ->
+    mutation.results.push { count: results.rowCount }
+
+  _deleted: (mutation, results) ->
+    mutation.results.push { count: results.rowCount }

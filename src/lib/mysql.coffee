@@ -1,4 +1,5 @@
 {Client} = require "mysql"
+{Mutator} = require "./engine"
 
 class exports.Engine
   constructor: (@_configuration) ->
@@ -40,16 +41,41 @@ class exports.Engine
     set = """
       SET @position = 0
     """
-    sql = structure.sql.replace /^\s*SELECT/, """
+    sql = """
       CREATE TEMPORARY TABLE #{structure.temporary} AS
-      SELECT @position := @position + 1 AS #{structure.temporary}_row_number,   
+      SELECT @position := @position + 1 AS #{structure.temporary}_row_number, #{structure.temporary}_subselect.*
+        FROM (
+          #{structure.sql}
+        ) AS #{structure.temporary}_subselect
     """
     [ [ set, [] ], [ sql, parameters ] ]
 
-class Connection
+class Connection extends Mutator
   constructor: (@_client) ->
 
   sql: (query, parameters, callback) ->
     @_client.query query, parameters, callback
 
   close: -> @_client.destroy()
+
+  _returning: (relatable, sql, returning) ->
+    if returning.length isnt 1
+      throw new Error "can only return one value"
+    sql
+
+  _placeholder: (i) -> "?"
+
+  _inserted: (mutation, results, returning) ->
+    if returning.length is 1
+      result = { }
+      result[returning[0]] = results.insertId
+      mutation.results.push result
+    else
+      mutation.results.push { insertId: results.insertId }
+    
+
+  _updated: (mutation, results) ->
+    mutation.results.push { count: results.affectedRows }
+
+  _deleted: (mutation, results) ->
+    mutation.results.push { count: results.affectedRows }

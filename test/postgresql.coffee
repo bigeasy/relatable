@@ -4,9 +4,6 @@ fs = require "fs"
 
 configuration = JSON.parse fs.readFileSync("#{__dirname}/../configuration.json", "utf8")
 
-createRelatable = ->
-  relatable = new Relatable(configuration.databases.postgresql)
-
 class exports.PostgreSQLTest extends TwerpTest
   resetManufacturer: (relatable, callback) ->
     relatable.sql "DELETE FROM manufacturer WHERE id > 1", (error) =>
