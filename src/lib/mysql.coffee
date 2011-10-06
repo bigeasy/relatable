@@ -13,9 +13,9 @@ class exports.Engine
           connection.sql """
               SELECT columns.*
                 FROM information_schema.tables AS tables
-                JOIN information_schema.columns AS columns USING (table_catalog, table_schema, table_name)
-               WHERE table_type = 'BASE TABLE' AND tables.table_schema NOT IN ('pg_catalog', 'information_schema')
-            """, (error, results) =>
+                JOIN information_schema.columns AS columns USING (table_schema, table_name)
+               WHERE table_type = 'BASE TABLE' AND tables.table_schema = ?
+            """, [ connection._client.database ], (error, results) =>
               @_schema = {}
               for column in results
                 (@_schema[column.TABLE_NAME] or= []).push(column.COLUMN_NAME)

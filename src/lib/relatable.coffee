@@ -135,7 +135,18 @@ class Mutator
       subset[key] = object[key]
     subset
 
+  _fixupObject: (object) ->
+    hasParameters = typeof object.parameters is "object"
+    hasLiterals  = typeof object.literals is "object"
+    if not (hasParameters or hasLiterals)
+      object = parameters: object
+      hasParameters = true
+    object.parameters = {} if not hasParameters
+    object.literals = {} if not hasLiterals
+    object
+
   insert: (table, returning..., object) ->
+    object = @_fixupObject object
     @operations.push { type: "insert", table, returning, object }
 
   update: (table, where..., object) ->

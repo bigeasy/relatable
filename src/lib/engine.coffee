@@ -1,21 +1,31 @@
 class exports.Mutator
   insert: (mutation, operation) ->
     relatable = mutation.mutator.relatable
-    { table, returning, object } = operation
+    { table, returning, object: { parameters, literals } } = operation
 
-    keys = Object.keys(object)
+    keys =
+      parameters: Object.keys(parameters)
+      literals: Object.keys(literals)
+
+    into = keys.parameters.concat(keys.literals).map (key) ->
+      relatable._toSQL key
+
+    values = []
+    for key, i in keys.parameters
+      values.push @_placeholder i
+    for key in keys.literals
+      values.push literals[key]
+
     sql = """
-      INSERT INTO #{relatable._toSQL table} (
-        #{keys.map((k) -> relatable._toSQL k).join(", ")}
-      )
-      VALUES(#{keys.map((k, i) => "#{@_placeholder i}").join(", ")})
+      INSERT INTO #{relatable._toSQL table} (#{into.join(", ")})
+      VALUES(#{values.join(", ")})
     """
 
     if returning.length
       sql = @_returning relatable, sql, returning
 
-    parameters = keys.map((k) -> object[k])
-    @sql sql, parameters, (error, results) =>
+    values = keys.parameters.map((key) -> parameters[key])
+    @sql sql, values, (error, results) =>
       if error
         mutation.callback error
       else
