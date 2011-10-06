@@ -1,7 +1,7 @@
 class exports.Mutator
   insert: (mutation, operation) ->
     relatable = mutation.mutator.relatable
-    { table, returning, object: { parameters, literals } } = operation
+    { table, returning, parameters, literals } = operation
 
     keys =
       parameters: Object.keys(parameters)
@@ -35,13 +35,16 @@ class exports.Mutator
   update: (mutation, operation) ->
     relatable = mutation.mutator.relatable
 
-    { table, where, object } = operation
+    { table, where, parameters, literals } = operation
 
-    updated = Object.keys(object)
+    updated = Object.keys(parameters)
     selected = Object.keys(where)
 
     assignments = updated.map((k, i) =>
       "#{relatable._toSQL k} = #{@_placeholder i}")
+
+    for k, v of literals
+      assignments.push "#{relatable._toSQL k} = #{v}"
 
     conditions = selected.map((k, i) =>
       "#{relatable._toSQL k} = #{@_placeholder updated.length + i}")
@@ -52,14 +55,14 @@ class exports.Mutator
        WHERE #{conditions.join(" AND ")}
     """
 
-    parameters = []
+    values = []
     for key in updated
-      parameters.push object[key]
+      values.push parameters[key]
 
     for key in selected
-      parameters.push where[key]
+      values.push where[key]
 
-    @sql sql, parameters, (error, results) =>
+    @sql sql, values, (error, results) =>
       if error
         mutation.callback error
       else

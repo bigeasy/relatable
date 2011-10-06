@@ -59,6 +59,7 @@ class Connection extends Mutator
   close: -> @_client.destroy()
 
   _returning: (relatable, sql, returning) ->
+    # FIXME Throws an exception when it should callback.
     if returning.length isnt 1
       throw new Error "can only return one value"
     sql

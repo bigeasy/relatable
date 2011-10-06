@@ -1,4 +1,5 @@
 compiler = require "./compiler"
+{extend} = require("coffee-script").helpers
 
 class Selection
   constructor: (@relatable, @schema, @connection, @sql, @parameters, @callback) ->
@@ -136,27 +137,67 @@ class Mutator
     subset
 
   _fixupObject: (object) ->
-    hasParameters = typeof object.parameters is "object"
-    hasLiterals  = typeof object.literals is "object"
-    if not (hasParameters or hasLiterals)
-      object = parameters: object
-      hasParameters = true
-    object.parameters = {} if not hasParameters
-    object.literals = {} if not hasLiterals
     object
 
+  # A reminder to myself that signature flexibility means that the method
+  # signature becomes a splat. There is nothing you can do to stop it.
+
+  # Insert a record into a table specifying parameters and literal values.
   insert: (table, returning..., object) ->
-    object = @_fixupObject object
-    @operations.push { type: "insert", table, returning, object }
+    operation = { table, type: "insert" }
+
+    if returning.length and typeof returning[returning.length - 1] is "object"
+      operation.parameters = returning.pop()
+      operation.literals = object
+    else
+      has =
+        parameters: typeof object.parameters is "object"
+        literals:   typeof object.literals is "object"
+      if not (has.parameters or has.literals)
+        operation.parameters = object
+        operation.literals = {}
+      else
+        operation.parameters = object.parameters or {}
+        operation.literals = object.literals or {}
+
+    operation.returning = returning
+
+    @operations.push operation
 
   update: (table, where..., object) ->
-    if where.length is 1 and typeof where[0] is "object"
-      where = where[0]
+    operation = { table, type: "update" }
+
+    if where.length is 0
+      has =
+        set:        typeof object.set is "object"
+        parameters: typeof object.parameters is "object"
+        literals:   typeof object.literals is "object"
+      if not (has.set or has.parameters or has.literals)
+        throw new Error "nothing to set"
+      if has.set
+        operation.parameters = object.set
+      else
+        operation.parameters = object.parameters or {}
+      operation.literals = object.literals or {}
+      operation.where    = object.where or {}
+    else if where.length is 1 and typeof where[0] is "object"
+      extend operation, where: where[0], parameters: object, literals: {}
     else
-      where = @_subset object, where
+      operation.where = @_subset object, where
       set = Object.keys(object).filter((key) -> where[key] is undefined)
-      object = @_subset object, set
-    @operations.push { type: "update", table, where, object }
+      operation.parameters = @_subset object, set
+      operation.literals = {}
+    
+    has =
+      parameters: Object.keys(operation.parameters) isnt 0
+      literals:   Object.keys(operation.literals) isnt 0
+      where:      Object.keys(operation.where) isnt 0
+    if not (has.parameters or has.literals)
+      throw new Error "nothing to set"
+    if not (has.where)
+      throw new Error "nothing to select"
+
+    @operations.push operation
 
   delete: (table, where..., object) ->
     if where.length is 0
