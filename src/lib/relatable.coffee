@@ -183,8 +183,9 @@ class Mutator
     else if where.length is 1 and typeof where[0] is "object"
       extend operation, where: where[0], parameters: object, literals: {}
     else
-      operation.where = @_subset object, where
-      set = Object.keys(object).filter((key) -> where[key] is undefined)
+      operation.where = exclude = @_subset object, where
+      set = Object.keys(object).filter (key) ->
+        operation.where[key] is undefined
       operation.parameters = @_subset object, set
       operation.literals = {}
     

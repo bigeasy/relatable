@@ -37,32 +37,44 @@ class exports.Mutator
 
     { table, where, parameters, literals } = operation
 
-    updated = Object.keys(parameters)
-    selected = Object.keys(where)
+    table = relatable._toSQL table
 
-    assignments = updated.map((k, i) =>
-      "#{relatable._toSQL k} = #{@_placeholder i}")
+    exists = {}
+    for key in mutation.schema[table]
+      exists[key] = true
 
-    for k, v of literals
-      assignments.push "#{relatable._toSQL k} = #{v}"
+    for key of operation.parameters
+      key = relatable._toSQL key
+      if not exists[key]
+        delete operation.parameters[key]
 
-    conditions = selected.map((k, i) =>
-      "#{relatable._toSQL k} = #{@_placeholder updated.length + i}")
+    setOrder = Object.keys(operation.parameters)
+    set = []
+    for k, i in setOrder
+      set.push "#{relatable._toSQL k} = #{@_placeholder i}"
+
+    for k, v of operation.literals
+      set.push "#{relatable._toSQL k} = #{v}"
+
+    whereOrder = Object.keys(operation.where)
+    where = []
+    for k, i in whereOrder
+      where.push "#{relatable._toSQL k} = #{@_placeholder setOrder.length + i}"
 
     sql = """
       UPDATE #{table}
-         SET #{assignments.join(", ")}
-       WHERE #{conditions.join(" AND ")}
+         SET #{set.join(", ")}
+       WHERE #{where.join(" AND ")}
     """
 
-    values = []
-    for key in updated
-      values.push parameters[key]
+    parameters = []
+    for key in setOrder
+      parameters.push operation.parameters[key]
 
-    for key in selected
-      values.push where[key]
+    for key in whereOrder
+      parameters.push operation.where[key]
 
-    @sql sql, values, (error, results) =>
+    @sql sql, parameters, (error, results) =>
       if error
         mutation.callback error
       else
