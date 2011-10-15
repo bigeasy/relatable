@@ -1,4 +1,25 @@
 class exports.Mutator
+  raw: (mutation, operation) ->
+    relatable = mutation.mutator.relatable
+    console.log { operation }
+    @sql operation.sql, operation.parameters, (error, results) ->
+      console.log { results }
+      if error
+        mutation.callback error
+      else
+        mutation.results.push results
+        mutation.mutate()
+
+  select: (mutation, operation) ->
+    relatable = mutation.mutator.relatable
+    callback = (error, results) ->
+      if error
+        mutation.callback error
+      else
+        mutation.results.push results
+        mutation.mutate()
+    relatable._select(mutation.schema, mutation.connection, operation.sql, operation.parameters, false, callback)
+
   insert: (mutation, operation) ->
     relatable = mutation.mutator.relatable
     { table, returning, parameters, literals } = operation

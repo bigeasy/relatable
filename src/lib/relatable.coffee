@@ -2,7 +2,7 @@ compiler = require "./compiler"
 {extend} = require("coffee-script").helpers
 
 class Selection
-  constructor: (@relatable, @schema, @connection, @sql, @parameters, @callback) ->
+  constructor: (@relatable, @schema, @connection, @sql, @parameters, @close, @callback) ->
     @cleanup = []
     @completed = {}
 
@@ -22,7 +22,7 @@ class Selection
         else
           @complete()
     else
-      @connection.close()
+      @connection.close() if @close
       @callback null, @results
   
   join: (structures, expanded) ->
@@ -119,6 +119,7 @@ class Mutation
     @results = []
 
   mutate: ->
+    console.log "KSDJFLJSLF"
     if @operations.length
       operation = @operations.shift()
       @connection[operation.type](@, operation)
@@ -138,6 +139,12 @@ class Mutator
 
   _fixupObject: (object) ->
     object
+
+  sql: (sql, parameters = []) ->
+    @operations.push { type: "raw", sql, parameters }
+
+  select: (sql, parameters...) ->
+    @operations.push { type: "select", sql, parameters }
 
   # A reminder to myself that signature flexibility means that the method
   # signature becomes a splat. There is nothing you can do to stop it.
@@ -254,11 +261,11 @@ class exports.Relatable
     if parameters.length is 1 and typeof parameters[0] is "object"
       parameters = parameters[0]
     @_engine.connect (error, schema, connection) =>
-      if error
-        callback error
-      else
-        selection = new Selection(@, schema, connection, sql, parameters, callback)
-        selection.execute()
+      @_select(schema, connection, sql, parameters, true, callback)
+
+  _select: (schema, connection, sql, parameters, close, callback) ->
+    selection = new Selection(@, schema, connection, sql, parameters, close, callback)
+    selection.execute()
 
   mutate: -> new Mutator(@)
 
