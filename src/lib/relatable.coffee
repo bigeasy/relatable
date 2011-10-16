@@ -52,7 +52,7 @@ class Selection
           for result in results.rows or results
             tree = @treeify result, pivot
             for join in joins
-              tree[join.pivot] = []
+              tree[@relatable._toJavaScript join.pivot] = []
             expanded.push tree
         else
           expanded = results.rows or results
@@ -71,7 +71,7 @@ class Selection
             for i in [0...keys.length - 1]
               current = current[record[fields[keys[i]]]] or= {}
             parent = current[@_get(record, @relatable._toJavaScript fields[keys[keys.length - 1]])]
-            parent[pivot].push(record)
+            parent[@relatable._toJavaScript pivot].push(record)
         else
           @results = expanded
         @join structures, expanded
@@ -112,14 +112,13 @@ class Selection
         part = @relatable._toJavaScript parts[i]
         branch = branch[part] = branch[part] or {}
       branch[@relatable._toJavaScript parts[parts.length - 1]] = record[key]
-    tree[get]
+    tree[@relatable._toJavaScript get]
 
 class Mutation
   constructor: (@mutator, @schema, @connection, @operations, @callback) ->
     @results = []
 
   mutate: ->
-    console.log "KSDJFLJSLF"
     if @operations.length
       operation = @operations.shift()
       @connection[operation.type](@, operation)
