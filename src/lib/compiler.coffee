@@ -49,11 +49,14 @@ compileSelect = (path, scan, schema, callback) ->
             else
               parents[right.table] = left.table
         else if not through
-          [ left, right ] = scan.slice(i + 1, i + 3)
-          if left.table is token.alias
-            through = left
+          if scan[i + 1].type is "left"
+            [ left, right ] = scan.slice(i + 1, i + 3)
+            if left.table is token.alias
+              through = left
+            else
+              through = right
           else
-            through = right
+            through = token
 
   # Table field wildcards will be expanded to reflect the tree structure of the
   # treeified structure.
@@ -81,11 +84,14 @@ compileSelect = (path, scan, schema, callback) ->
       expansions.shift()
 
   if through
-    parents[through.table] = pivot
-    columns.push
-      qualifiedName: "#{through.table}.#{through.column}"
-      alias: through.table
-      column: through.column
+    if through.type is "left"
+      parents[through.table] = pivot
+      columns.push
+        qualifiedName: "#{through.table}.#{through.column}"
+        alias: through.table
+        column: through.column
+    else
+      parents[through.alias] = pivot
 
   for select in columns
     current = select.alias

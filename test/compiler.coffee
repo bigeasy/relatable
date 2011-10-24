@@ -100,7 +100,32 @@ class exports.CompilerTest extends TwerpTest
         }, structure.joins[0].join
         done 4
 
-  'test: through join table': (done) ->
+  'test: through join table alone': (done) ->
+    reflector (schema) =>
+      compiler.compile """
+        SELECT products.*
+          FROM SaleItem AS item
+          JOIN Product AS products ON products.manufacturerId = item.manufacturerId
+                                  AND products.manufacturerCode = item.manufacturerCode
+          WHERE item.sale_id = ? 
+      """, schema, (structure) =>
+        expected = """
+          SELECT products.id AS products__id,
+                 products.manufacturerId AS products__manufacturerId,
+                 products.manufacturerCode AS products__manufacturerCode,
+                 products.name AS products__name,
+                 item.saleId AS products__item__saleId
+            JOIN SaleItem AS item
+            JOIN Product AS products ON products.manufacturerId = item.manufacturerId
+                                    AND products.manufacturerCode = item.manufacturerCode
+           WHERE item.sale_id = ? 
+        """.trim().replace(/\s+/g, ' ')
+        length = 100
+        @equal expected.substring(0, length), structure.sql.trim().replace(/relatable_temporary_\d+/, "relatable_temporary_N").replace(/\s+/g, ' ').substring(0, length)
+        @equal "products", structure.pivot
+        done 3
+
+  'test: through join table many': (done) ->
     reflector (schema) =>
       compiler.compile """
         SELECT * FROM Sale AS sale
