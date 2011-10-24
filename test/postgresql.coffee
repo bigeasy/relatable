@@ -58,6 +58,7 @@ class exports.PostgreSQLTest extends TwerpTest
       mutator = relatable.mutate()
       mutator.update "Manufacturer", "id", name: "Axme", id: 1
       mutator.execute (error, results) =>
+        throw error if error
         @equal 1, results[0].count
         relatable.select "SELECT * FROM manufacturer", (error, results) =>
           @equal 1, results.length

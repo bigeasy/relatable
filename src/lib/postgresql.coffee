@@ -8,18 +8,24 @@ class exports.Engine
     if not @_schmea
       @_schema = {}
       @_connect (error, connection) =>
-        connection.sql """
-          SELECT columns.*
-            FROM information_schema.tables AS tables
-            JOIN information_schema.columns AS columns USING (table_catalog, table_schema, table_name)
-           WHERE table_type = 'BASE TABLE' AND  tables.table_schema NOT IN ('pg_catalog', 'information_schema')
-        """, (error, results) =>
-          for column in results.rows
-            (@_schema[column.table_name] or= []).push(column.column_name)
-          connection.close()
-          callback @_schema
+        if error
+          callback error
+        else
+          connection.sql """
+            SELECT columns.*
+              FROM information_schema.tables AS tables
+              JOIN information_schema.columns AS columns USING (table_catalog, table_schema, table_name)
+             WHERE table_type = 'BASE TABLE' AND  tables.table_schema NOT IN ('pg_catalog', 'information_schema')
+          """, (error, results) =>
+            if error
+              callback error
+            else
+              for column in results.rows
+                (@_schema[column.table_name] or= []).push(column.column_name)
+              connection.close()
+              callback null, @_schema
     else
-      callback @_schema
+      callback null, @_schema
 
   temporary: (structure, parameters) ->
     create = """
@@ -35,11 +41,15 @@ class exports.Engine
     [ [ create, [] ], [ sql, parameters ], [ drop, [] ] ]
 
   connect: (callback) ->
-    @schema (schema) =>
-      @_connect (error, connection) =>
-        callback(error, schema, connection)
+    @schema (error, schema) =>
+      if error
+        callback error
+      else
+        @_connect (error, connection) =>
+          callback(error, schema, connection)
 
   _connect: (callback) ->
+    @_configuration.database = @_configuration.name
     client = new (pg.Client)(@_configuration)
     client.on "connect", =>
       callback(null, new Connection(client))
@@ -63,7 +73,10 @@ class Connection extends Mutator
   _placeholder: (i) -> "$#{i + 1}"
 
   _inserted: (mutation, results, returning) ->
-    mutation.results.push results.rows[0]
+    if results.rows.length
+      mutation.results.push results.rows[0]
+    else
+      mutation.results.push { count: results.rowCount }
 
   _updated: (mutation, results) ->
     mutation.results.push { count: results.rowCount }
