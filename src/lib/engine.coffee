@@ -1,9 +1,7 @@
 class exports.Mutator
   raw: (mutation, operation) ->
     relatable = mutation.mutator.relatable
-    console.log { operation }
     @sql operation.sql, operation.parameters, (error, results) ->
-      console.log { results }
       if error
         mutation.callback error
       else
