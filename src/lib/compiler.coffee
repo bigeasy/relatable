@@ -84,14 +84,14 @@ compileSelect = (path, scan, schema, callback) ->
       expansions.shift()
 
   if through
-    if through.type is "left"
+    if through.type is "table"
+      parents[through.alias] = pivot
+    else
       parents[through.table] = pivot
       columns.push
         qualifiedName: "#{through.table}.#{through.column}"
         alias: through.table
         column: through.column
-    else
-      parents[through.alias] = pivot
 
   for select in columns
     current = select.alias
