@@ -54,7 +54,10 @@ class Connection extends Mutator
   constructor: (@_client) ->
 
   sql: (query, parameters, callback) ->
-    @_client.query query, parameters, callback
+    try
+      @_client.query query, parameters, callback
+    catch error
+      callback error
 
   close: -> @_client.destroy()
 
