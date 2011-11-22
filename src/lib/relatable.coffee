@@ -143,6 +143,8 @@ class Mutator
     @operations.push { type: "raw", sql, parameters }
 
   select: (sql, parameters...) ->
+    if parameters.length is 1 and Array.isArray(parameters[0])
+      parameters = parameters[0]
     @operations.push { type: "select", sql, parameters }
 
   # A reminder to myself that signature flexibility means that the method
