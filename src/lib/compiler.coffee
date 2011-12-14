@@ -3,22 +3,106 @@ scanner = require "./scanner"
 
 identifier = 0
 
+exports.update = (definition, splat...) ->
+  if typeof definition is "object" and splat.length is 0
+    operation = type: "update"
+    operation[key] = value for key, value of definition
+  else
+    update = scanner.mutation definition, tableOnly: false
+    if splat.length is 2
+      [ where, object ] = splat
+    else
+      object = where = splat[0]
+    operation =
+      type: "update"
+      table: update.table
+      literals: update.literals
+      parameters: {}
+      where: {}
+
+    for column in update.where
+      operation.where[column] = where[column]
+    
+    if update.columns.length is 0
+      star = Object.keys(operation.literals).length is 0
+    else
+      for column in update.columns
+        if column is "*"
+          star = true
+          break
+        else
+          operation.parameters[column] = object[column]
+    
+    if star
+      for column, value of object
+        if update.where.indexOf(column) is -1
+          operation.parameters[column] = value
+
+  operation
+
+exports.delete = (definition, object) ->
+  if typeof definition is "object"
+    operation = type: "delete"
+    operation[key] = value for key, value of definition
+  else
+    _delete = scanner.mutation definition, tableOnly: true
+    operation =
+      type: "delete"
+      table: _delete.table
+      where: {}
+    if _delete.where.length is 0
+      operation.where[key] = value for key, value of object
+    else
+      operation.where[key] = object[key] for key in _delete.where
+  operation
+
+exports.insert = (definition, object) ->
+  if typeof definition is "object"
+    operation =
+      type: "insert"
+      returning: []
+      parameters: {}
+      literals: {}
+    operation[key] = value for key, value of definition
+  else
+    insert = scanner.mutation definition, tableOnly: true
+    operation =
+      type: "insert"
+      table: insert.table
+      returning: insert.where
+      parameters: {}
+      literals: insert.literals
+
+    if insert.columns.length is 0
+      star = not (key for key of insert.literals).length
+    else
+      for column in insert.columns
+        if column is "*"
+          star = true
+          break
+        else
+          operation.parameters[column] = object[column]
+
+    if star
+      operation.parameters[key] = value for key, value of object
+  operation
+
 exports.compile = (sql, schema, callback) ->
-  scan = scanner.scan sql
+  scan = scanner.query sql
 
   # Split the scan into separate select statements.
   selects = [ [] ]
   for part in scan
     selects[0].push part
     selects.unshift [] if part.type is "rest"
-  compileSelect [], selects.pop(), schema, (structure) ->
+  compileSelect [], selects.pop(), schema, (error, { structure }) ->
     compileSelects [ structure ], selects, schema, callback
 
 compileSelects = (path, selects, schema, callback) ->
   if selects.length is 1
-    callback(path[0])
+    callback(null, { structure: path[0] })
   else
-    compileSelect path, selects.pop(), schema, (structure, scan) ->
+    compileSelect path, selects.pop(), schema, (error, { structure, scan }) ->
       compileSelects path, selects, schema, callback
 
 compileSelect = (path, scan, schema, callback) ->
@@ -151,4 +235,4 @@ compileSelect = (path, scan, schema, callback) ->
 
   extend(structure, { sql: sql.join(""), parents, pivot, joins: [] })
 
-  callback(structure, scan)
+  callback(null, { structure, scan })

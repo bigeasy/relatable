@@ -7,7 +7,7 @@ class Selection
     @completed = {}
 
   execute: ->
-    compiler.compile @sql, @schema, (structure) =>
+    compiler.compile @sql, @schema, (error, { structure }) =>
       if Array.isArray @parameters
         parameters = {}
         parameters[structure.pivot] = @parameters
@@ -22,7 +22,7 @@ class Selection
         else
           @complete()
     else
-      @connection.close() if @close
+      @connection.close("ROLLBACK", ->) if @close
       @callback null, @results
   
   join: (structures, expanded) ->
@@ -114,20 +114,8 @@ class Selection
       branch[@relatable._toJavaScript parts[parts.length - 1]] = record[key]
     tree[@relatable._toJavaScript get]
 
-class Mutation
-  constructor: (@mutator, @schema, @connection, @operations, @callback) ->
-    @results = []
-
-  mutate: ->
-    if @operations.length
-      operation = @operations.shift()
-      @connection[operation.type](@, operation)
-    else
-      @connection.close()
-      @callback null, @results
-
 class Mutator
-  constructor: (@relatable) ->
+  constructor: (@relatable, @schema, @connection) ->
     @operations = []
 
   _subset: (object, keys) ->
@@ -151,69 +139,19 @@ class Mutator
   # signature becomes a splat. There is nothing you can do to stop it.
 
   # Insert a record into a table specifying parameters and literal values.
-  insert: (table, returning..., object) ->
-    operation = { table, type: "insert" }
+  insert: (pattern, object, callback) ->
+    callback = object unless callback?
+    operation = compiler.insert pattern, object
+    @connection[operation.type](@, operation, callback)
 
-    if returning.length and typeof returning[returning.length - 1] is "object"
-      operation.parameters = returning.pop()
-      operation.literals = object
-    else
-      has =
-        parameters: typeof object.parameters is "object"
-        literals:   typeof object.literals is "object"
-      if not (has.parameters or has.literals)
-        operation.parameters = object
-        operation.literals = {}
-      else
-        operation.parameters = object.parameters or {}
-        operation.literals = object.literals or {}
+  update: (pattern, splat..., callback) ->
+    operation = compiler.update.apply compiler, [ pattern ].concat splat
+    @connection[operation.type](@, operation, callback)
 
-    operation.returning = returning
-
-    @operations.push operation
-
-  update: (table, where..., object) ->
-    operation = { table, type: "update" }
-
-    if where.length is 0
-      has =
-        set:        typeof object.set is "object"
-        parameters: typeof object.parameters is "object"
-        literals:   typeof object.literals is "object"
-      if not (has.set or has.parameters or has.literals)
-        throw new Error "nothing to set"
-      if has.set
-        operation.parameters = object.set
-      else
-        operation.parameters = object.parameters or {}
-      operation.literals = object.literals or {}
-      operation.where    = object.where or {}
-    else if where.length is 1 and typeof where[0] is "object"
-      extend operation, where: where[0], parameters: object, literals: {}
-    else
-      operation.where = exclude = @_subset object, where
-      set = Object.keys(object).filter (key) ->
-        operation.where[key] is undefined
-      operation.parameters = @_subset object, set
-      operation.literals = {}
-    
-    has =
-      parameters: Object.keys(operation.parameters) isnt 0
-      literals:   Object.keys(operation.literals) isnt 0
-      where:      Object.keys(operation.where) isnt 0
-    if not (has.parameters or has.literals)
-      throw new Error "nothing to set"
-    if not (has.where)
-      throw new Error "nothing to select"
-
-    @operations.push operation
-
-  delete: (table, where..., object) ->
-    if where.length is 0
-      where = object
-    else
-      where = @_subset object, where
-    @operations.push { type: "delete", table, where }
+  delete: (pattern, object, callback) ->
+    callback = object unless callback?
+    operation = compiler.delete pattern, object
+    @connection[operation.type](@, operation, callback)
 
   execute: (callback) ->
     @relatable._engine.connect (error, schema, connection) =>
@@ -268,7 +206,22 @@ class exports.Relatable
     selection = new Selection(@, schema, connection, sql, parameters, close, callback)
     selection.execute()
 
-  mutate: -> new Mutator(@)
+  mutate: (done, transaction) ->
+    @_engine.connect (error, schema, connection) =>
+      if error
+        callback error
+      else
+        mutator = new Mutator(@, schema, connection)
+        transaction mutator, (error) =>
+          if error
+            connection.close "ROLLBACK", (error) ->
+            done error
+          else
+            connection.close "COMMIT", (error) ->
+              if error
+                done error
+              else
+                done()
 
   sql: (sql, parameters..., callback) ->
     if parameters.length and Array.isArray(parameters[0])
@@ -281,8 +234,11 @@ class exports.Relatable
           if error
             callback error
           else
-            connection.close()
-            callback null, results
+            connection.close "COMMIT", (error) ->
+              if error
+                callback error
+              else
+                callback null, results
 
   cache: (engine) ->
     new CachingRelatable(@, engine || new ForeverCache())
@@ -351,3 +307,7 @@ class CachingRelatable
     @_relatable.encache(key, results)
 
   uncached: -> @_relatable.uncached()
+
+die = (splat...) ->
+  console.log.apply null, splat if splat.length
+  process.exit 1

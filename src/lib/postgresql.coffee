@@ -22,7 +22,7 @@ class exports.Engine
             else
               for column in results.rows
                 (@_schema[column.table_name] or= []).push(column.column_name)
-              connection.close()
+              connection.close("ROLLBACK", ->)
               callback null, @_schema
     else
       callback null, @_schema
@@ -63,7 +63,9 @@ class Connection extends Mutator
   sql: (query, parameters, callback) ->
     @_client.query query, parameters, callback
 
-  close: -> @_client.end()
+  close: (terminator, callback) ->
+    @_client.once "drain", -> callback()
+    @_client.query terminator, [], => @_client.end()
 
   _returning: (relatable, sql, returning) ->
     if returning.length > 1
@@ -72,14 +74,14 @@ class Connection extends Mutator
 
   _placeholder: (i) -> "$#{i + 1}"
 
-  _inserted: (mutation, results, returning) ->
+  _inserted: (results, returning) ->
     if results.rows.length
-      mutation.results.push results.rows[0]
+      results.rows[0]
     else
-      mutation.results.push { count: results.rowCount }
+      { count: results.rowCount }
 
-  _updated: (mutation, results) ->
-    mutation.results.push { count: results.rowCount }
+  _updated: (results) ->
+    { count: results.rowCount }
 
-  _deleted: (mutation, results) ->
-    mutation.results.push { count: results.rowCount }
+  _deleted: (results) ->
+    { count: results.rowCount }

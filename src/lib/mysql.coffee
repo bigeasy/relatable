@@ -19,7 +19,7 @@ class exports.Engine
               @_schema = {}
               for column in results
                 (@_schema[column.TABLE_NAME] or= []).push(column.COLUMN_NAME)
-              connection.close()
+              connection.close("COMMIT", ->)
               @connect callback
     else
       @_connect (error, connection) =>
@@ -57,9 +57,13 @@ class Connection extends Mutator
     try
       @_client.query query, parameters, callback
     catch error
+      console.error "CLOSING"
+      @close()
       callback error
 
-  close: -> @_client.destroy()
+  close: (terminator, callback) ->
+    @_client.destroy()
+    callback()
 
   _returning: (relatable, sql, returning) ->
     # FIXME Throws an exception when it should callback.
@@ -69,17 +73,15 @@ class Connection extends Mutator
 
   _placeholder: (i) -> "?"
 
-  _inserted: (mutation, results, returning) ->
+  _inserted: (results, returning) ->
     if returning.length is 1
       result = { }
       result[returning[0]] = results.insertId
-      mutation.results.push result
+      result
     else
-      mutation.results.push { insertId: results.insertId }
+      { insertId: results.insertId }
     
 
-  _updated: (mutation, results) ->
-    mutation.results.push { count: results.affectedRows }
+  _updated: (results) -> { count: results.affectedRows }
 
-  _deleted: (mutation, results) ->
-    mutation.results.push { count: results.affectedRows }
+  _deleted: (results) -> { count: results.affectedRows }

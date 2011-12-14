@@ -18,8 +18,8 @@ class exports.Mutator
         mutation.mutate()
     relatable._select(mutation.schema, mutation.connection, operation.sql, operation.parameters, false, callback)
 
-  insert: (mutation, operation) ->
-    relatable = mutation.mutator.relatable
+  insert: (mutation, operation, callback) ->
+    relatable = mutation.relatable
     { table, returning, parameters, literals } = operation
 
     keys =
@@ -30,10 +30,8 @@ class exports.Mutator
       relatable._toSQL key
 
     values = []
-    for key, i in keys.parameters
-      values.push @_placeholder i
-    for key in keys.literals
-      values.push literals[key]
+    values.push @_placeholder i for key, i in keys.parameters
+    values.push literals[key] for key in keys.literals
 
     sql = """
       INSERT INTO #{relatable._toSQL table} (#{into.join(", ")})
@@ -46,21 +44,19 @@ class exports.Mutator
     values = keys.parameters.map((key) -> parameters[key])
     @sql sql, values, (error, results) =>
       if error
-        mutation.callback error
+        callback error
       else
-        @_inserted mutation, results, returning
-        mutation.mutate()
+        callback null, @_inserted results, returning
 
-  update: (mutation, operation) ->
-    relatable = mutation.mutator.relatable
+  update: (mutation, operation, callback) ->
+    relatable = mutation.relatable
 
     { table, where, parameters, literals } = operation
 
     table = relatable._toSQL table
 
     exists = {}
-    for key in mutation.schema[table]
-      exists[key] = true
+    exists[key] = true for key in mutation.schema[table]
 
     for key of operation.parameters
       key = relatable._toSQL key
@@ -95,13 +91,12 @@ class exports.Mutator
 
     @sql sql, parameters, (error, results) =>
       if error
-        mutation.callback error
+        callback error
       else
-        @_updated mutation, results
-        mutation.mutate()
+        callback null, @_updated results
 
-  delete: (mutation, operation) ->
-    relatable = mutation.mutator.relatable
+  delete: (mutation, operation, callback) ->
+    relatable = mutation.relatable
 
     { table, where } = operation
 
@@ -119,7 +114,6 @@ class exports.Mutator
 
     @sql sql, parameters, (error, results) =>
       if error
-        mutation.callback error
+        callback error
       else
-        @_deleted mutation, results
-        mutation.mutate()
+        callback null, @_deleted results

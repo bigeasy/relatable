@@ -1,10 +1,11 @@
 {merge} = require("coffee-script").helpers
+
 ##### Scanner
 # Scans through an SQL statement, finding the parts of interest to the relatable
 # rewriter, recording their position in the SQL statement.
-exports.scan = (sql) ->
+exports.query = (sql) ->
   scanner = new Scanner()
-  scanner.scan(sql)
+  scanner.query(sql)
 
 class Scanner
   identifier: (message) ->
@@ -40,6 +41,53 @@ class Scanner
         @token merge fields, { value: value.join(""), table, column }
         @before = [ space ]
 
+  sql: (stop, consume) ->
+    sql = []
+    stop = "#{stop}".replace /\/(.*)\//, "$1"
+    looping = true
+    while looping
+      [ chunk, terminal ] = @advance """
+        cannot find SQL termination
+      """, "(.*?)((?:\\(|'|#{stop}))"
+      switch terminal
+        when "'"
+          sql.push chunk
+          sql.push terminal
+          [ string ] = @advance """
+            cannot read SQL string
+          """, ///
+            ((?:[^']|'')+')   # rest of single quoted string
+          ///
+          sql.push string
+        when "("
+          sql.push chunk
+          sql.push terminal
+          depth = 1
+          while depth
+            [ chunk, terminal ] = @advance """
+              unclosed parenthesis
+            """, ///
+              (
+                (?:
+                  [^()']+
+                  |
+                  '(?:[^']|'')+'   # single quoted string
+                )*
+              )
+              (
+                [)(]
+              )
+            ///
+            sql.push chunk
+            sql.push terminal
+            if terminal is "(" then ++depth else --depth
+        else
+          sql.push chunk
+          looping = false
+
+    sql = sql.join ""
+    [ sql, terminal ]
+         
   skipParenthesis: ->
     depth = 1
     while depth
@@ -89,13 +137,13 @@ class Scanner
     @rest = fields.pop()
     fields
 
-  scan: (@sql) ->
+  query: (@text) ->
     @tokens = []
     @before = []
     @value = []
-    @_scan(@sql)
+    @_query(@text)
 
-  _scan: (@rest, join) ->
+  _query: (@rest, join) ->
     # Let's get past SELECT and DISINCT.
     match = ///
       ^
@@ -237,7 +285,7 @@ class Scanner
           @skipParenthesis()
         else
           @token type: "rest"
-          @_scan(@rest, true)
+          @_query(@rest, true)
           break
       else
         @token type: "rest"
@@ -255,3 +303,88 @@ class Scanner
     @tokens.push token
 
   error: (message) -> message
+
+  reset: (@rest) -> @index = 0
+
+  advance: (error, regex) ->
+    regex = error if not regex
+
+    source = if typeof regex is "string"
+        regex
+      else
+        "#{regex}".replace /\/(.*)\//, "$1"
+
+    regex = new RegExp "^(#{source})([^\\u0000]*)$"
+
+    if not match = regex.exec @rest
+      throw Error @error error
+
+    last    = match.length - 1
+    @index += match[1].length
+    @rest   = match[last]
+
+    match[2...last]
+
+  mutation: (@text, allow) ->
+    @reset(@text)
+    [ table ] = @advance """
+      cannot find table specification
+    """, ///
+      \s*           # possible white space.
+      (\w[\w\d_]*)  # capture an JavaScript identifier.
+      \s*
+    ///
+    columns = []
+    literals = {}
+    if allow?.tableOnly and @rest.length is 0
+      return { table: table, columns, literals, where: [] }
+    [ where, assignment ] = @advance """
+      cannot find key specification
+    """, ///
+      \(            # start of identifiers
+      (
+        \s*
+        \w[\w\d_]*  # capture an JavaScript identifier.
+        (?:
+          \s*
+          ,
+          \s*
+          \w[\w\d_]*  # capture an JavaScript identifier.
+        )*
+        \s*
+      )
+      \)
+      \s*
+    ///
+    where = where.split /\s*,\s*/
+    while @rest.length
+      [ column, delimiter ] = @advance """
+        cannot find column specification
+      """, ///
+        (\*|\w[\w\d_]*)
+        \s*
+        (?:
+          ([=,])
+          \s*
+        )?
+      ///
+      switch delimiter
+        when ","
+          columns.push column
+        when "="
+          [ sql ] = @sql /,|\s*$/
+          literals[column] = sql
+          @advance /\s*/
+        else
+          if @rest.length
+            throw new Error @error "unexpected characters"
+          columns.push column
+    { table, columns, literals, where }
+
+die = (splat...) ->
+  console.log.apply null, splat if splat.length
+  process.exit 1
+
+exports.mutation = (sql, allow) ->
+  scanner = new Scanner()
+  scanner.mutation(sql, allow)
