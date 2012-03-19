@@ -1,6 +1,4 @@
-#!/usr/bin/env coffee-streamline
-return if not require("streamline/module")(module)
-
+#!/usr/bin/env _coffee
 require("./harness") 12, ({ compiler, reflector }, _) ->
   schema = reflector _
   { structure } = compiler.compile "SELECT * FROM Product", schema, _

@@ -1,11 +1,9 @@
-#!/usr/bin/env coffee-streamline
+#!/usr/bin/env _coffee
 
+count = 0
 # Test harness to test MySQL update.
-
-return if not require("streamline/module")(module)
-
 require("./harness") 2, ({ relatable, resetManufacturer }, _) ->
-  resetManufacturer _
+  resetManufacturer(_)
   relatable.sql "INSERT INTO Manufacturer (name) VALUES('Yoyodyne')", _
   relatable.mutate _, (mutator, _) ->
     mutator.delete "Manufacturer(name)", { name: "Yoyodyne", id: 1 }, _
