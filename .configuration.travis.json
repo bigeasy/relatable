@@ -1,0 +1,22 @@
+{
+  "databases": {
+    "mysql": {
+      "name": "relatable",
+      "alias": "mysql",
+      "user": "root",
+      "engine": "./mysql",
+      "hostname": "localhost",
+      "port": 3306
+    },
+    "postgresql": {
+      "name": "relatable",
+      "alias": "postgresql",
+      "database": "relatable",
+      "user": "postgres",
+      "hostname": "127.0.0.1",
+      "fixup": true,
+      "engine": "./postgresql",
+      "port": 5432
+    }
+  }
+}
