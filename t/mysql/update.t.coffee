@@ -1,8 +1,6 @@
-#!/usr/bin/env coffee-streamline
+#!/usr/bin/env _coffee
 
 # Test harness to test MySQL update.
-
-return if not require("streamline/module")(module)
 
 require("./harness") 5, ({ relatable, resetManufacturer }, _) ->
   resetManufacturer _

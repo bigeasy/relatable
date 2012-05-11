@@ -1,5 +1,4 @@
-#!/usr/bin/env coffee-streamline
-return if not require("streamline/module")(module)
+#!/usr/bin/env _coffee
 
 require("./harness") 3, ({ relatable, resetManufacturer }, _) ->
   resetManufacturer _

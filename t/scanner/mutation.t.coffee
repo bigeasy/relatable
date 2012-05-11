@@ -75,7 +75,4 @@ require("./harness") 8, ({ scanner }) ->
   """
   @deepEqual mutation, expected, "with columns and literals"
 
-
-  @throws ->
-    scanner.mutation "Section"
-  , /cannot find key specification/, "no key specification"
+  @throws /cannot find key specification/, -> scanner.mutation "Section"
