@@ -51,12 +51,10 @@ class Connection extends Mutator
 
   sql: (query, parameters, callback) ->
     try
-      say "HERE"
       @_client.query query, parameters, callback
     catch error
       console.error "CLOSING"
-      @close()
-      callback error
+      @close null, -> callback error
 
   close: (terminator, callback) ->
     @_client.destroy()
