@@ -1,6 +1,5 @@
 #!/usr/bin/env _coffee
-require("./proof") 12, ({ compiler, reflector }, _) ->
-  schema = reflector _
+require("./proof") 12, ({ compiler, schema }, _) ->
   { structure } = compiler.compile "SELECT * FROM Product", schema, _
   expected = """
     SELECT Product.id AS Product__id,
