@@ -1,6 +1,6 @@
 #!/usr/bin/env _coffee
 
-require("./harness") 2, ({ relatable, resetManufacturer }, _) ->
+require("./proof") 2, ({ relatable, resetManufacturer }, _) ->
   resetManufacturer _
   relatable.mutate _, (mutator, _) =>
     first = mutator.insert "Manufacturer(id)", name: "Yoyodyne", _

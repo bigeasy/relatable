@@ -1,5 +1,5 @@
-#!/usr/bin/env coffee-streamline
-require("./harness") 8, ({ scanner }) ->
+#!/usr/bin/env _coffee
+require("./proof") 8, ({ scanner }) ->
   expected = {
     table: "Section"
     where: []

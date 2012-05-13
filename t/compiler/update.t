@@ -1,5 +1,5 @@
-#!/usr/bin/env coffee-streamline
-require("./harness") 5, ({ object, compiler }) ->
+#!/usr/bin/env _coffee
+require("./proof") 5, ({ object, compiler }) ->
   expected =
     type: "update"
     table: "Section"
