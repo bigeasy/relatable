@@ -21,13 +21,11 @@ context =
         JOIN information_schema.columns AS columns USING (table_schema, table_name)
        WHERE table_type = 'BASE TABLE' AND tables.table_schema = ?
     """, [ mysql.name ], (error, results, fields) =>
-      console.log results
       if error
         callback error
       else
         for column in results
           (schema[column.TABLE_NAME] or= []).push(column.COLUMN_NAME)
         client.destroy()
-        console.log schema
         callback null, schema
 module.exports = require("proof") context
