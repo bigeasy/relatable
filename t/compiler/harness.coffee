@@ -18,9 +18,9 @@ context =
     client.query """
       SELECT columns.*
         FROM information_schema.tables AS tables
-        JOIN information_schema.columns AS columns USING (table_catalog, table_schema, table_name)
-       WHERE table_type = 'BASE TABLE' AND  tables.table_schema NOT IN ('pg_catalog', 'information_schema')
-    """, (error, results, fields) =>
+        JOIN information_schema.columns AS columns USING (table_schema, table_name)
+       WHERE table_type = 'BASE TABLE' AND tables.table_schema = ?
+    """, [ mysql.name ], (error, results, fields) =>
       console.log results
       if error
         callback error
