@@ -31,11 +31,7 @@ class exports.Engine
     client.user       = @_configuration.user
     client.password   = @_configuration.password
     client.database   = @_configuration.name
-    client.connect (error) ->
-      if error
-        callback error
-      else
-        callback null, new Connection(client)
+    callback null, new Connection(client)
 
   temporary: (structure, parameters) ->
     set = """
@@ -58,8 +54,7 @@ class Connection extends Mutator
       @_client.query query, parameters, callback
     catch error
       console.error "CLOSING"
-      @close()
-      callback error
+      @close null, -> callback error
 
   close: (terminator, callback) ->
     @_client.destroy()

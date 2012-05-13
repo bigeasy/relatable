@@ -1,10 +1,8 @@
-#!/usr/bin/env coffee-streamline
+#!/usr/bin/env _coffee
 
 # Test harness to test MySQL update.
 
-return if not require("streamline/module")(module)
-
-require("./harness") 6, ({ relatable, resetManufacturer }, _) ->
+require("./proof") 6, ({ relatable, resetManufacturer }, _) ->
   resetManufacturer _
   relatable.mutate _, (mutator, _) =>
     first = mutator.insert "Manufacturer(id)", name: "Yoyodyne", _

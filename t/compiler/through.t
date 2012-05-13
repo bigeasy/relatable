@@ -1,8 +1,5 @@
-#!/usr/bin/env coffee-streamline
-return if not require("streamline/module")(module)
-
-require("./harness") 2, ({ compiler, reflector }, _) ->
-  schema = reflector _
+#!/usr/bin/env _coffee
+require("./proof") 2, ({ compiler, schema }, _) ->
   { structure } = compiler.compile """
     SELECT products.*
       FROM SaleItem AS item
