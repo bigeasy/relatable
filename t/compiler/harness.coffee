@@ -27,5 +27,6 @@ context =
         for column in results
           (schema[column.TABLE_NAME] or= []).push(column.COLUMN_NAME)
         client.destroy()
+        console.log schema
         callback null, schema
 module.exports = require("proof") context
