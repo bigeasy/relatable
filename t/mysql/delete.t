@@ -1,8 +1,7 @@
 #!/usr/bin/env _coffee
 
-count = 0
 # Test harness to test MySQL update.
-require("./harness") 2, ({ relatable, resetManufacturer }, _) ->
+require("./proof") 2, ({ relatable, resetManufacturer }, _) ->
   resetManufacturer(_)
   relatable.sql "INSERT INTO Manufacturer (name) VALUES('Yoyodyne')", _
   relatable.mutate _, (mutator, _) ->

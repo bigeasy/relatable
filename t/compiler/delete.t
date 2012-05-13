@@ -1,6 +1,6 @@
-#!/usr/bin/env coffee-streamline
+#!/usr/bin/env _coffee
 
-require("./harness") 2, ({ compiler, object }) ->
+require("./proof") 2, ({ compiler, object }) ->
   expected =
     type: "delete"
     table: "Section"

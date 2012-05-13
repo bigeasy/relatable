@@ -1,5 +1,5 @@
 #!/usr/bin/env _coffee
-require("./harness") 5, ({ compiler, reflector }, _) ->
+require("./proof") 5, ({ compiler, reflector }, _) ->
   schema = reflector _
   { structure } = compiler.compile """
     SELECT * FROM Sale AS sale
