@@ -18,6 +18,4 @@ before_install:
   - psql -c 'create database relatable;' -U postgres
   - psql -U postgres relatable < ddl/postgresql.sql
   - mv .configuration.travis.json configuration.json
-  - npm install coffee-script proof streamline pg mysql
-  - git submodule init && git submodule update
-  - cake compile
+  - npm install
