@@ -1,6 +1,6 @@
 #!/usr/bin/env _coffee
 
-require("./proof") 10, ({ scanner }) ->
+require("./proof") 10, (scanner) ->
   tree = scanner.query("SELECT * FROM a")
   @deepEqual tree, [
     { before: 'SELECT ', value: '*', type: 'all' },

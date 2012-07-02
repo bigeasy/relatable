@@ -1,6 +1,6 @@
 #!/usr/bin/env _coffee
 
-require("./proof") 2, ({ relatable, resetManufacturer }, _) ->
+require("./proof") 2, (relatable, resetManufacturer, _) ->
   resetManufacturer _
   relatable.mutate _, (mutator, _) =>
     mutator.update "Manufacturer(id)", name: "Axme", id: 1, _

@@ -1,5 +1,5 @@
 #!/usr/bin/env _coffee
-require("./proof") 5, ({ object, compiler }) ->
+require("./proof") 5, (object, compiler) ->
   expected =
     type: "update"
     table: "Section"

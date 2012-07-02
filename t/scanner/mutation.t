@@ -1,5 +1,5 @@
 #!/usr/bin/env _coffee
-require("./proof") 8, ({ scanner }) ->
+require("./proof") 8, (scanner) ->
   expected = {
     table: "Section"
     where: []

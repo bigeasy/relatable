@@ -1,6 +1,6 @@
 #!/usr/bin/env _coffee
 
-require("./proof") 2, ({ compiler, object }) ->
+require("./proof") 2, (compiler, object) ->
   expected =
     type: "delete"
     table: "Section"
