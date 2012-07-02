@@ -1,1 +1,1 @@
-module.exports = require("proof") scanner: require("../../lib/scanner")
+module.exports = require("proof") -> { scanner: require("../../lib/scanner") }

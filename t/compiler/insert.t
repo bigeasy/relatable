@@ -1,6 +1,6 @@
 #!/usr/bin/env _coffee
 
-require("./proof") 4, ({ compiler, object }) ->
+require("./proof") 4, (compiler, object) ->
   expected =
     type: "insert"
     table: "Section"

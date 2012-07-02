@@ -1,5 +1,5 @@
 #!/usr/bin/env _coffee
-require("./proof") 5, ({ compiler, schema }, _) ->
+require("./proof") 5, (compiler, schema, _) ->
   { structure } = compiler.compile """
     SELECT * FROM Sale AS sale
     SELECT products.*

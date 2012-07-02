@@ -1,6 +1,6 @@
 #!/usr/bin/env _coffee
 
-require("./proof") 3, ({ relatable, resetManufacturer }, _) ->
+require("./proof") 3, (relatable, resetManufacturer, _) ->
   resetManufacturer _
   results = relatable.select "SELECT * FROM product", _
   @deepEqual [
