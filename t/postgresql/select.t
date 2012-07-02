@@ -1,9 +1,9 @@
 #!/usr/bin/env _coffee
 
-require("./proof") 3, (relatable, resetManufacturer, _) ->
+require("./proof") 3, (relatable, resetManufacturer, deepEqual, _) ->
   resetManufacturer _
   results = relatable.select "SELECT * FROM product", _
-  @deepEqual [
+  deepEqual [
     { id: 1
     , manufacturerId: 1
     , manufacturerCode: 'A'
@@ -16,7 +16,7 @@ require("./proof") 3, (relatable, resetManufacturer, _) ->
       SELECT *
         FROM product AS products ON products.manufacturer_id = manufacturer.id
     """, _
-  @deepEqual [
+  deepEqual [
     { id: 1
     , name: 'Acme'
     , products: [{ id:1,  manufacturerId:1, manufacturerCode: "A", name:"Heavy Anvil" }]
@@ -30,7 +30,7 @@ require("./proof") 3, (relatable, resetManufacturer, _) ->
         JOIN product AS products ON products.manufacturer_id = item.manufacturer_id
                                 AND products.manufacturer_code = item.manufacturer_code
     """, _
-  @deepEqual [ {
+  deepEqual [ {
     id: 1,
     customerId: 1,
     products: [

@@ -1,6 +1,6 @@
 #!/usr/bin/env _coffee
 
-require("./proof") 2, (relatable, resetManufacturer, _) ->
+require("./proof") 2, (relatable, resetManufacturer, deepEqual, _) ->
   resetManufacturer _
   relatable.sql "INSERT INTO manufacturer (name) VALUES('Yoyodyne')", _
   relatable.mutate _, (mutator, _) ->
@@ -8,7 +8,7 @@ require("./proof") 2, (relatable, resetManufacturer, _) ->
   manufacturers = relatable.select "SELECT * FROM manufacturer", _
   names = (manufacturer.name for manufacturer in manufacturers)
   expected = [ "Acme" ]
-  @deepEqual names, expected, "with key"
+  deepEqual names, expected, "with key"
 
   resetManufacturer _
   relatable.sql "INSERT INTO manufacturer (name) VALUES('Yoyodyne')", _
@@ -17,4 +17,4 @@ require("./proof") 2, (relatable, resetManufacturer, _) ->
   manufacturers = relatable.select "SELECT * FROM manufacturer", _
   names = (manufacturer.name for manufacturer in manufacturers)
   expected = [ "Acme" ]
-  @deepEqual names, expected, "no key"
+  deepEqual names, expected, "no key"

@@ -9,6 +9,6 @@
     , "mysql": ">=0"
     , "pg": ">=0"
     , "streamline": ">=0.3.0"
-    , "proof": "0.0.10" }
+    , "proof": "0.0.15" }
 ,   "scripts" :         { "test": "(proof run t/*/*.t | tee .proof.out | proof progress) || (proof errors < .proof.out)" }
 }
