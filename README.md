@@ -1,5 +1,4 @@
-# Relatable [![Build
-# Status](https://secure.travis-ci.org/bigeasy/relatable.png?branch=master)](http://travis-ci.org/bigeasy/relatable)
+# Relatable [![Build Status](https://secure.travis-ci.org/bigeasy/relatable.png?branch=master)](http://travis-ci.org/bigeasy/relatable)
 
 Turns your SQL queries in to JSON trees.
 
