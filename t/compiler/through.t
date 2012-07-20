@@ -1,5 +1,5 @@
 #!/usr/bin/env _coffee
-require("./proof") 2, (compiler, schema, _) ->
+require("./proof") 2, (equal, compiler, schema, _) ->
   { structure } = compiler.compile """
     SELECT products.*
       FROM SaleItem AS item
@@ -19,5 +19,5 @@ require("./proof") 2, (compiler, schema, _) ->
   """.trim().replace(/\s+/g, ' ')
   length = Math.MAX_VALUE
   actual = structure.sql.trim().replace(/relatable_temporary_\d+/, "relatable_temporary_N").replace(/\s+/g, ' ').substring(0, length)
-  @equal actual, expected.substring(0, length), "test via join table sql"
-  @equal structure.pivot, "products", "test via join table pivot"
+  equal actual, expected.substring(0, length), "test via join table sql"
+  equal structure.pivot, "products", "test via join table pivot"

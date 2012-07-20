@@ -1,5 +1,5 @@
 #!/usr/bin/env _coffee
-require("./proof") 5, (compiler, schema, _) ->
+require("./proof") 5, (compiler, schema, equal, deepEqual, _) ->
   { structure } = compiler.compile """
     SELECT * FROM Sale AS sale
     SELECT products.*
@@ -14,7 +14,7 @@ require("./proof") 5, (compiler, schema, _) ->
   """.trim().replace(/\s+/g, ' ')
   length = Math.MAX_VALUE
   actual = structure.sql.trim().replace(/\s+/g, ' ').substring(0, length)
-  @equal actual, expected.substring(0, length), "parent sql"
+  equal actual, expected.substring(0, length), "parent sql"
   expected = """
     SELECT products.id AS products__id,
            products.manufacturerId AS products__manufacturerId,
@@ -28,7 +28,7 @@ require("./proof") 5, (compiler, schema, _) ->
   """.trim().replace(/\s+/g, ' ')
   length = Math.MAX_VALUE
   actual = structure.joins[0].sql.trim().replace(/relatable_temporary_\d+/, "relatable_temporary_N").replace(/\s+/g, ' ').substring(0, length)
-  @equal actual, expected.substring(0, length), "child sql"
-  @equal structure.joins[0].pivot, "products", "child pivot"
-  @equal structure.joins[0].join.table, "sale", "child join table"
-  @deepEqual structure.joins[0].join.fields, { "id": "item.saleId" }, "child join fields"
+  equal actual, expected.substring(0, length), "child sql"
+  equal structure.joins[0].pivot, "products", "child pivot"
+  equal structure.joins[0].join.table, "sale", "child join table"
+  deepEqual structure.joins[0].join.fields, { "id": "item.saleId" }, "child join fields"

@@ -1,78 +1,85 @@
-#!/usr/bin/env _coffee
-require("./proof") 8, (scanner) ->
+#!/usr/bin/env node
+require("./proof")(8, function (scanner, equal, deepEqual) {
+  var expected, mutation;
   expected = {
     table: "Section"
-    where: []
-    columns: []
-    literals: {}
-  }
-  mutation = scanner.mutation "Section", tableOnly: true
-  @deepEqual mutation, expected, "table only"
+  , where: []
+  , columns: []
+  , literals: {}
+  };
+  mutation = scanner.mutation("Section", { tableOnly: true });
+  deepEqual(mutation, expected, "table only");
 
   expected = {
     table: "Section"
-    where: [ 'id' ]
-    columns: []
-    literals: {}
+  , where: [ 'id' ]
+  , columns: []
+  , literals: {}
   }
-  mutation = scanner.mutation "Section(id)"
-  @deepEqual mutation, expected, "key only"
+  mutation = scanner.mutation("Section(id)");
+  deepEqual(mutation, expected, "key only");
 
   expected = {
     table: "Section"
-    where: [ 'id' ]
-    columns: [ 'rgt', 'lft' ]
-    literals: {}
+  , where: [ 'id' ]
+  , columns: [ 'rgt', 'lft' ]
+  , literals: {}
   }
-  mutation = scanner.mutation "Section(id) rgt, lft"
-  @deepEqual mutation, expected, "with columns"
+  mutation = scanner.mutation("Section(id) rgt, lft");
+  deepEqual(mutation, expected, "with columns");
 
   expected = {
     table: "Section"
-    where: [ 'id' ]
-    columns: [ "*" ]
-    literals: {}
+  , where: [ 'id' ]
+  , columns: [ "*" ]
+  , literals: {}
   }
-  mutation = scanner.mutation "Section(id) *"
-  @deepEqual mutation, expected, "star only"
+  mutation = scanner.mutation("Section(id) *");
+  deepEqual(mutation, expected, "star only");
 
   expected = {
     table: "Section"
-    where: [ 'id' ]
-    columns: []
-    literals:
+  , where: [ 'id' ]
+  , columns: []
+  , literals: {
       updatedAt: 'DATE_FORMAT(CURRENT_TIMESTAMP(), \'%D %y %a %d %m %b %j\')'
+    }
   }
-  mutation = scanner.mutation """
-    Section(id)
-      updatedAt = DATE_FORMAT(CURRENT_TIMESTAMP(), '%D %y %a %d %m %b %j')
-  """
-  @deepEqual mutation, expected, "with literals"
+  mutation = scanner.mutation("\n\
+    Section(id) \n\
+      updatedAt = DATE_FORMAT(CURRENT_TIMESTAMP(), '%D %y %a %d %m %b %j') \n\
+  ");
+  deepEqual(mutation, expected, "with literals");
 
   expected = {
     columns: []
-    where: [ 'id' ]
-    literals:
+  , where: [ 'id' ]
+  , literals: {
       name: '\'Axme\''
-    table: "Manufacturer"
-  }
-  mutation = scanner.mutation """
-    Manufacturer(id) name = 'Axme'
-  """
-  @deepEqual mutation, expected, "with string literal"
+    }
+  , table: "Manufacturer"
+  };
+  mutation = scanner.mutation("Manufacturer(id) name = 'Axme'");
+  deepEqual(mutation, expected, "with string literal");
 
   expected = {
     columns: [ 'rgt', 'lft' ]
-    where: [ 'id' ]
-    literals:
+  , where: [ 'id' ]
+  , literals: {
       updatedAt: 'DATE_FORMAT(CURRENT_TIMESTAMP(), \'%D %y %a %d %m %b %j\')'
-    table: "Section"
-  }
-  mutation = scanner.mutation """
-    Section(id)
-      updatedAt = DATE_FORMAT(CURRENT_TIMESTAMP(), '%D %y %a %d %m %b %j'),
-      rgt, lft
-  """
-  @deepEqual mutation, expected, "with columns and literals"
+    }
+  , table: "Section"
+  };
+  mutation = scanner.mutation("\n\
+    Section(id) \n\
+      updatedAt = DATE_FORMAT(CURRENT_TIMESTAMP(), '%D %y %a %d %m %b %j'), \n\
+      rgt, lft \n\
+  ");
+  deepEqual(mutation, expected, "with columns and literals");
 
-  @throws /cannot find key specification/, -> scanner.mutation "Section"
+  try {
+    scanner.mutation("Section");
+  } catch (error) {
+    equal(error.message, 'cannot find key specification');
+  }
+});

@@ -1,5 +1,5 @@
-#!/usr/bin/env _coffee
-require("./proof") 5, (object, compiler) ->
+#!/usr/bin/env coffee
+require("./proof") 5, (object, compiler, deepEqual) ->
   expected =
     type: "update"
     table: "Section"
@@ -7,7 +7,7 @@ require("./proof") 5, (object, compiler) ->
     parameters: { rgt: 1, lft: 2, permalink: "home" }
     literals: {}
   actual = compiler.update "Section(id)", object
-  @deepEqual actual, expected, "key only"
+  deepEqual actual, expected, "key only"
 
   expected =
     type: "update"
@@ -16,7 +16,7 @@ require("./proof") 5, (object, compiler) ->
     parameters: { rgt: 1, lft: 2 }
     literals: {}
   actual = compiler.update "Section(id) rgt, lft", object
-  @deepEqual actual, expected, "with set"
+  deepEqual actual, expected, "with set"
 
   expected =
     type: "update"
@@ -25,7 +25,7 @@ require("./proof") 5, (object, compiler) ->
     parameters: { rgt: 1, lft: 2, permalink: "home" }
     literals: {}
   actual = compiler.update "Section(id) *", object
-  @deepEqual actual, expected, "star only"
+  deepEqual actual, expected, "star only"
 
   expected =
     type: "update"
@@ -34,7 +34,7 @@ require("./proof") 5, (object, compiler) ->
     parameters: { rgt: 1, lft: 2, permalink: "home" }
     literals: {}
   actual = compiler.update "Section(id) rgt, lft, *", object
-  @deepEqual actual, expected, "star and set"
+  deepEqual actual, expected, "star and set"
 
   expected =
     type: "update"
@@ -46,4 +46,4 @@ require("./proof") 5, (object, compiler) ->
   actual = compiler.update """
     Section(id) *, updatedAt = DATE_FORMAT(CURRENT_TIMESTAMP(), '%D %y %a %d %m %b %j'),
   """, object
-  @deepEqual actual, expected, "star and literals"
+  deepEqual actual, expected, "star and literals"

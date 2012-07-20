@@ -1,16 +1,16 @@
-#!/usr/bin/env _coffee
+#!/usr/bin/env coffee
 
-require("./proof") 2, (compiler, object) ->
+require("./proof") 2, (compiler, object, deepEqual) ->
   expected =
     type: "delete"
     table: "Section"
     where: object
   actual = compiler.delete "Section", object
-  @deepEqual actual, expected, "table only"
+  deepEqual actual, expected, "table only"
 
   expected =
     type: "delete"
     table: "Section"
     where: { id: 1 }
   actual = compiler.delete "Section(id)", object
-  @deepEqual actual, expected, "with key"
+  deepEqual actual, expected, "with key"
