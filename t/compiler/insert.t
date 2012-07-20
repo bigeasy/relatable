@@ -1,6 +1,6 @@
-#!/usr/bin/env _coffee
+#!/usr/bin/env coffee
 
-require("./proof") 4, (compiler, object) ->
+require("./proof") 4, (compiler, object, deepEqual) ->
   expected =
     type: "insert"
     table: "Section"
@@ -8,7 +8,7 @@ require("./proof") 4, (compiler, object) ->
     returning: []
     literals: {}
   actual = compiler.insert "Section", object
-  @deepEqual actual, expected, "table only"
+  deepEqual actual, expected, "table only"
 
   expected =
     type: "insert"
@@ -17,7 +17,7 @@ require("./proof") 4, (compiler, object) ->
     returning: [ "id" ]
     literals: {}
   actual = compiler.insert "Section(id)", object
-  @deepEqual actual, expected, "with returning"
+  deepEqual actual, expected, "with returning"
 
   expected =
     type: "insert"
@@ -26,7 +26,7 @@ require("./proof") 4, (compiler, object) ->
     returning: [ "id" ]
     literals: {}
   actual = compiler.insert "Section(id) permalink", object
-  @deepEqual actual, expected, "specific fields"
+  deepEqual actual, expected, "specific fields"
 
   expected =
     type: "insert"
@@ -35,4 +35,4 @@ require("./proof") 4, (compiler, object) ->
     returning: [ "id" ]
     literals: { permalink: "'home'" }
   actual = compiler.insert "Section(id) permalink = 'home'", object
-  @deepEqual actual, expected, "literals"
+  deepEqual actual, expected, "literals"
