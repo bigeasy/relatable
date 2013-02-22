@@ -12,7 +12,10 @@ module.exports = require("proof")(function (async) {
     var configuration = JSON.parse(body);
     mysql = configuration.databases.mysql
 
+    console.log(Client);
+    console.log("HERE");
     client            = new Client()
+    console.log("THERE");
     client.host       = mysql.hostname
     client.user       = mysql.user
     client.password   = mysql.password
