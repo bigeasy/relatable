@@ -1,17 +1,98 @@
-#!/usr/bin/env _coffee
+#!/usr/bin/env node
 
-require("./proof") 2, (relatable, resetManufacturer, deepEqual, _) ->
-  resetManufacturer _
-  relatable.mutate _, (mutator, _) =>
-    mutator.update "Manufacturer(id)", name: "Axme", id: 1, _
-  manufacturers = relatable.select "SELECT * FROM manufacturer ORDER BY name", _
-  names = (manufacturer.name for manufacturer in manufacturers)
-  deepEqual names, [ "Axme", ], "update"
+require("./proof")(5, function (async, relatable, resetManufacturer, equal, deepEqual) {
+  var mutator;
 
-  resetManufacturer _
-  relatable.sql "INSERT INTO manufacturer (name) VALUES('Acme')", _
-  relatable.mutate _, (mutator, _) =>
-    result = mutator.update "Manufacturer(name) name", { name: "Acme" }, { name: "Axme" }, _
-  manufacturers = relatable.select "SELECT * FROM manufacturer ORDER BY name", _
-  names = (manufacturer.name for manufacturer in manufacturers)
-  deepEqual names, [ "Axme", "Axme", ], "update identity"
+  async(function () {
+
+    resetManufacturer(async());
+
+  }, function () {
+
+    mutator = relatable.mutate();  
+    mutator.update("Manufacturer(id)", { name: "Axme", id: 1 });
+    mutator.commit(async());
+
+  }, function () {
+
+    relatable.select("SELECT * FROM manufacturer", async());
+
+  }, function (manufacturers) {
+
+    equal("Axme", manufacturers[0].name, "key only");
+  
+    resetManufacturer(async());
+
+  }, function () {
+
+    mutator = relatable.mutate();  
+    mutator.update("Manufacturer(id) name", { name: "Axme", id: 1 });
+    mutator.commit(async());
+
+  }, function () {
+
+    relatable.select("SELECT * FROM manufacturer", async());
+  
+  }, function (manufacturers) {
+
+    equal("Axme", manufacturers[0].name, "specific field");
+
+    resetManufacturer(async());
+
+  }, function () {
+
+    mutator = relatable.mutate();  
+    mutator.update({
+      table:      "Manufacturer",
+      parameters: { name: "Axme" },
+      where:      { id: 1 }
+    });
+    mutator.commit(async());
+
+  }, function () {
+
+    relatable.select("SELECT * FROM manufacturer", async());
+  
+  }, function (manufacturers) {
+
+    equal("Axme", manufacturers[0].name, "explicit");
+
+    resetManufacturer(async());
+
+  }, function () {
+
+    mutator = relatable.mutate();  
+    mutator.update("Manufacturer(id) name = 'Axme'", { name: "Axme", id: 1 });
+    mutator.commit(async());
+
+  }, function () {
+
+    relatable.select("SELECT * FROM manufacturer", async());
+  
+  }, function (manufacturers) {
+
+    equal("Axme", manufacturers[0].name, "with literal");
+
+    resetManufacturer(async());
+
+  }, function () {
+
+    relatable.sql("INSERT INTO Manufacturer (name) VALUES('Acme')", async());
+
+  }, function () {
+
+    mutator = relatable.mutate();  
+    mutator.update("Manufacturer(name) name", { name: "Acme" }, { name: "Axme" });
+    mutator.commit(async());
+
+  }, function () {
+
+    relatable.select("SELECT * FROM manufacturer", async());
+  
+  }, function (manufacturers) {
+
+    var names = manufacturers.map(function (manufacturer) { return manufacturer.name });
+    deepEqual(names, [ "Axme", "Axme" ], "update identity one");
+  
+  });
+});

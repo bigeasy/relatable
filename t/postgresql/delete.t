@@ -1,20 +1,51 @@
-#!/usr/bin/env _coffee
+#!/usr/bin/env node
 
-require("./proof") 2, (relatable, resetManufacturer, deepEqual, _) ->
-  resetManufacturer _
-  relatable.sql "INSERT INTO manufacturer (name) VALUES('Yoyodyne')", _
-  relatable.mutate _, (mutator, _) ->
-    mutator.delete "Manufacturer(name)", { name: "Yoyodyne", id: 1 }, _
-  manufacturers = relatable.select "SELECT * FROM manufacturer", _
-  names = (manufacturer.name for manufacturer in manufacturers)
-  expected = [ "Acme" ]
-  deepEqual names, expected, "with key"
+require("./proof")(2, function (async, relatable, resetManufacturer, deepEqual) {
+  var mutator;
 
-  resetManufacturer _
-  relatable.sql "INSERT INTO manufacturer (name) VALUES('Yoyodyne')", _
-  relatable.mutate _, (mutator, _) ->
-    mutator.delete "Manufacturer", { name: "Yoyodyne" }, _
-  manufacturers = relatable.select "SELECT * FROM manufacturer", _
-  names = (manufacturer.name for manufacturer in manufacturers)
-  expected = [ "Acme" ]
-  deepEqual names, expected, "no key"
+  async(function () {
+
+    resetManufacturer(async())
+
+  }, function () {
+
+    relatable.sql("INSERT INTO Manufacturer (name) VALUES('Yoyodyne')", async());
+
+  }, function () {
+
+    mutator = relatable.mutate();
+    mutator.delete("Manufacturer(name)", { name: "Yoyodyne", id: 1 });
+    mutator.commit(async());
+
+  }, function () {
+
+    relatable.select("SELECT * FROM manufacturer", async());
+
+  }, function (manufacturers) {
+    
+    var names = manufacturers.map(function (manufacturer) { return manufacturer.name });
+    deepEqual(names, [ "Acme" ], "with key");
+
+    resetManufacturer(async());
+
+  }, function () {
+
+    relatable.sql("INSERT INTO Manufacturer (name) VALUES('Yoyodyne')", async()); 
+
+  }, function () {
+
+    mutator = relatable.mutate();
+    mutator.delete("Manufacturer", { name: "Yoyodyne" }, async());
+    mutator.commit(async());
+
+  }, function () {
+
+    relatable.select("SELECT * FROM manufacturer", async());
+
+  }, function (manufacturers) {
+    
+    var names = manufacturers.map(function (manufacturer) { return manufacturer.name });
+    deepEqual(names, [ "Acme" ], "no key");
+
+  });
+});

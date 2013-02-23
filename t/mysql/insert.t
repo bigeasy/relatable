@@ -1,34 +1,76 @@
-#!/usr/bin/env _coffee
+#!/usr/bin/env node
 
-# Test harness to test MySQL update.
+// Test harness to test MySQL update.
 
-require("./proof") 6, (relatable, resetManufacturer, ok, equal, deepEqual, _) ->
-  resetManufacturer _
-  relatable.mutate _, (mutator, _) =>
-    first = mutator.insert "Manufacturer(id)", name: "Yoyodyne", _
-    second = mutator.insert "Manufacturer(id) name", name: "Omni Consumer Products", _
-    equal first.id + 1, second.id, "insert returning"
-  manufacturers = relatable.select "SELECT * FROM Manufacturer ORDER BY name", _
-  names = (manufacturer.name for manufacturer in manufacturers)
-  deepEqual names, [ "Acme", "Omni Consumer Products", "Yoyodyne" ], "insert"
+require("./proof")(6, function (async, relatable, resetManufacturer, ok, equal, deepEqual) {
+  var mutator;
 
-  resetManufacturer _
-  relatable.mutate _, (mutator, _) =>
-    insertion =
-      table: "Manufacturer"
-      returning: [ "id" ]
-      parameters:
-        name: "Yoyodyne"
-    returning = mutator.insert insertion, _
-    ok returning.id, "insertion explicit returning"
-  manufacturers = relatable.select "SELECT * FROM Manufacturer ORDER BY name", _
-  names = (manufacturer.name for manufacturer in manufacturers)
-  deepEqual names, [ "Acme", "Yoyodyne" ], "insert explicit"
+  async(function () {
 
-  resetManufacturer _
-  relatable.mutate _, (mutator, _) =>
-    returning = mutator.insert "Manufacturer(id) name = 'Yoyodyne'", _
-    ok returning.id, "insertion literal returning"
-  manufacturers = relatable.select "SELECT * FROM Manufacturer ORDER BY name", _
-  names = (manufacturer.name for manufacturer in manufacturers)
-  deepEqual names, [ "Acme", "Yoyodyne" ], "insert literal"
+      resetManufacturer(async());
+
+  }, function () {
+
+      mutator = relatable.mutate();
+      mutator.insert("Manufacturer(id)", { name: "Yoyodyne" });
+      mutator.insert("Manufacturer(id) name", { name: "Omni Consumer Products" });
+      mutator.commit(async());
+
+  }, function (mutation) {
+
+      equal(mutation[0].id + 1, mutation[1].id, "insert returing");
+
+      relatable.select("SELECT * FROM Manufacturer ORDER BY name", async());
+
+  }, function (manufacturers) {
+
+      var names = manufacturers.map(function (manufacturer) { return manufacturer.name });
+      deepEqual(names, [ "Acme", "Omni Consumer Products", "Yoyodyne" ], "insert");
+
+      resetManufacturer(async());
+
+  }, function () {
+
+      var insertion = {
+        table: "Manufacturer",
+        returning: [ "id" ],
+        parameters: { name: "Yoyodyne" }
+      };
+      mutator = relatable.mutate();
+      mutator.insert(insertion, async());
+
+  }, function (inserted) {
+
+      ok(inserted.id, "insertion explicit returning");
+
+      mutator.commit(async());
+
+  }, function () {
+
+      relatable.select("SELECT * FROM Manufacturer ORDER BY name", async());
+
+  }, function (manufacturers) {
+
+      var names = manufacturers.map(function (manufacturer) { return manufacturer.name });
+      deepEqual(names, [ "Acme", "Yoyodyne" ], "insert explicit");
+
+      resetManufacturer(async());
+  
+  }, function () {
+
+      mutator = relatable.mutate();
+      mutator.insert("Manufacturer(id) name = 'Yoyodyne'", async());
+
+  }, function (returning) {
+
+      ok(returning.id, "insertion literal returning");
+
+      relatable.select("SELECT * FROM Manufacturer ORDER BY name", async());
+
+  }, function (manufacturers) {
+
+      var names = manufacturers.map(function (manufacturer) { return manufacturer.name });
+      deepEqual(names, [ "Acme", "Yoyodyne" ], "insert explicit");
+
+  });
+});
