@@ -7,7 +7,7 @@ require("./proof")(8, function (scanner, equal, deepEqual) {
   , columns: []
   , literals: {}
   };
-  mutation = scanner.mutation("Section", { tableOnly: true });
+  mutation = scanner.mutation("Section");
   deepEqual(mutation, expected, "table only");
 
   expected = {
@@ -26,6 +26,15 @@ require("./proof")(8, function (scanner, equal, deepEqual) {
   , literals: {}
   }
   mutation = scanner.mutation("Section(id) rgt, lft");
+  deepEqual(mutation, expected, "with key and columns");
+
+  expected = {
+    table: "Section"
+  , where: []
+  , columns: [ 'rgt', 'lft' ]
+  , literals: {}
+  }
+  mutation = scanner.mutation("Section rgt, lft");
   deepEqual(mutation, expected, "with columns");
 
   expected = {
