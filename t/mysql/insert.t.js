@@ -2,7 +2,7 @@
 
 // Test harness to test MySQL update.
 
-require("./proof")(6, function (async, relatable, resetManufacturer, ok, equal, deepEqual) {
+require("./proof")(7, function (async, relatable, resetManufacturer, ok, equal, deepEqual) {
   var mutator;
 
   async(function () {
@@ -12,8 +12,8 @@ require("./proof")(6, function (async, relatable, resetManufacturer, ok, equal, 
   }, function () {
 
       mutator = relatable.mutate();
-      mutator.insert("Manufacturer(id)", { name: "Yoyodyne" });
-      mutator.insert("Manufacturer(id) name", { name: "Omni Consumer Products" });
+      mutator.insert("Manufacturer", { name: "Yoyodyne" });
+      mutator.insert("Manufacturer name", { name: "Omni Consumer Products" });
       mutator.commit(async());
 
   }, function (mutation) {
@@ -71,6 +71,24 @@ require("./proof")(6, function (async, relatable, resetManufacturer, ok, equal, 
 
       var names = manufacturers.map(function (manufacturer) { return manufacturer.name });
       deepEqual(names, [ "Acme", "Yoyodyne" ], "insert explicit");
+
+      resetManufacturer(async());
+
+  }, function () {
+
+      mutator = relatable.mutate();
+      mutator.insertIf("Manufacturer(name) name", { name: "Acme" });
+      mutator.insertIf("Manufacturer(name)", { name: "Yoyodyne" });
+      mutator.commit(async());
+
+  }, function () {
+
+      relatable.select("SELECT * FROM Manufacturer ORDER BY name", async());
+
+  }, function (manufacturers) {
+
+      var names = manufacturers.map(function (manufacturer) { return manufacturer.name });
+      deepEqual(names, [ "Acme", "Yoyodyne" ], "insert if");
 
   });
 });

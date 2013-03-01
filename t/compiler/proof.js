@@ -4,7 +4,7 @@ module.exports = require("proof")(function (async) {
     , compiler = require("../../lib/compiler")
     ;
   
-  var object =  { id: 1, rgt: 1, lft: 2, permalink: "home" }, mysql, schema = {}, client;
+  var object =  { id: 1, rgt: 1, lft: 2, permalink: "home" }, mysql, schema = { public: {} }, client;
 
   async(function () {
     fs.readFile(__dirname + "/../../configuration.json", "utf8", async());
@@ -26,7 +26,7 @@ module.exports = require("proof")(function (async) {
     ", [ mysql.name ], async());
   }, function  (results) {
     results.forEach(function (column) {
-      (schema[column.TABLE_NAME] || (schema[column.TABLE_NAME] = [])).push(column.COLUMN_NAME);
+      (schema.public[column.TABLE_NAME.toLowerCase()] || (schema.public[column.TABLE_NAME.toLowerCase()] = { columns: [] })).columns.push(column.COLUMN_NAME);
     });
 
     client.destroy();

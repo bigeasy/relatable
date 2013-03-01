@@ -6,7 +6,7 @@ require("./proof")(4, function (compiler, object, deepEqual) {
     type: "insert",
     table: "Section",
     parameters: object,
-    returning: [],
+    where: [],
     literals: {}
   };
   actual = compiler.insert("Section", object);
@@ -16,17 +16,17 @@ require("./proof")(4, function (compiler, object, deepEqual) {
     type: "insert",
     table: "Section",
     parameters: object,
-    returning: [ "id" ],
+    where: [ "id" ],
     literals: {}
   };
   actual = compiler.insert("Section(id)", object);
-  deepEqual(actual, expected, "with returning");
+  deepEqual(actual, expected, "with where");
 
   expected = {
     type: "insert",
     table: "Section",
     parameters: { permalink: "home" },
-    returning: [ "id" ],
+    where: [ "id" ],
     literals: {}
   };
   actual = compiler.insert("Section(id) permalink", object);
@@ -36,7 +36,7 @@ require("./proof")(4, function (compiler, object, deepEqual) {
     type: "insert",
     table: "Section",
     parameters: {},
-    returning: [ "id" ],
+    where: [ "id" ],
     literals: { permalink: "'home'" }
   };
   actual = compiler.insert("Section(id) permalink = 'home'", object);
