@@ -14,8 +14,8 @@ branches:
 
 before_install:
   - mysql -e 'create database relatable;'
-  - mysql relatable < ddl/mysql.sql
+  - mysql relatable < t/ddl/mysql.sql
   - psql -c 'create database relatable;' -U postgres
-  - psql -U postgres relatable < ddl/postgresql.sql
+  - psql -U postgres relatable < t/ddl/postgresql.sql
   - mv .configuration.travis.json configuration.json
   - npm install
