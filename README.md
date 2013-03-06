@@ -11,6 +11,7 @@ Changes for each release.
 
 ### Version 0.0.3
 
+ * Remove `lib` directory. #29.
  * Move Travis CI configuration to `t` directory. #31.
  * Move `ddl` to `t` directory. #30.
 

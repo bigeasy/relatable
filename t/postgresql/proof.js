@@ -1,7 +1,7 @@
 // **TODO**: Move up one and include from engine directories, only the
 // `Relatable` configuration loading changes.
 module.exports = require("proof")(function () {
-  var Relatable = require("../../lib/relatable").Relatable, fs = require("fs");
+  var Relatable = require("../../relatable").Relatable, fs = require("fs");
   var configuration = JSON.parse(fs.readFileSync(__dirname + "/../../configuration.json", "utf8"));
   var context;
   return context = {

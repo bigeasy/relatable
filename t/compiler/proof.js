@@ -1,7 +1,7 @@
 module.exports = require("proof")(function (async) {
   var Client = require("mysql").Client
     , fs = require("fs")
-    , compiler = require("../../lib/compiler")
+    , compiler = require("../../compiler")
     ;
   
   var object =  { id: 1, rgt: 1, lft: 2, permalink: "home" }, mysql, schema = { public: {} }, client;

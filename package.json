@@ -6,7 +6,7 @@
     { "type": "git"
     , "url": "http://github.com/bigeasy/relatable.git"
     }
-,   "main":             "./lib/relatable.js"
+,   "main":             "./relatable.js"
 ,   "url" :             "http://bigeasy.github.com/relatable"
 ,   "keywords" :        ["orm", "json", "sql", "rdbms", "postgresql", "mysql", "database"]
 ,   "devDependencies":
