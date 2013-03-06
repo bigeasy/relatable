@@ -9,6 +9,11 @@ discussion](https://github.com/bigeasy/relatable/issues/10).
 
 Changes for each release.
 
+### Version 0.0.3
+
+ * Move Travis CI configuration to `t` directory. #31.
+ * Move `ddl` to `t` directory. #30.
+
 ### Version 0.0.2
 
 Fri Mar  1 07:30:38 UTC 2013

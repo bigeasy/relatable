@@ -17,5 +17,5 @@ before_install:
   - mysql relatable < t/ddl/mysql.sql
   - psql -c 'create database relatable;' -U postgres
   - psql -U postgres relatable < t/ddl/postgresql.sql
-  - mv .configuration.travis.json configuration.json
+  - mv t/configuration.travis.json configuration.json
   - npm install
