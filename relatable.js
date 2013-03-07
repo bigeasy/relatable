@@ -360,8 +360,7 @@ Relatable.prototype.select = function () {
 };
 
 Relatable.prototype._select = function (schema, connection, sql, parameters, close, callback) {
-  var selection = new Selection(this, schema, connection, sql, parameters, close, callback);
-  return selection.execute();
+  new Selection(this, schema, connection, sql, parameters, close, callback).execute();
 };
 
 Relatable.prototype.mutate = function () {
