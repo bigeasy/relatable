@@ -57,10 +57,11 @@ Mutator.prototype.insertIf = function (mutation, operation, callback) {
       where = operation.where.map(function (key, index) {
                 return key + " = " + mutator._placeholder(values.length + index)
               }),
+      dual = mutation.relatable._engine._dual ? "FROM DUAL\n" : "",
       sql = "\
     INSERT INTO " + (relatable._toSQL(table)) + " (" + (into.join(", ")) + ")\n\
     SELECT " + (values.join(", ")) + "\n\
-    FROM " + (relatable._toSQL(table)) + "\n\
+    " + dual +"\
     WHERE NOT EXISTS (\n\
       SELECT 1\n\
       FROM " + (relatable._toSQL(table)) + "\n\

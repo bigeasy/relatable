@@ -31,6 +31,7 @@ Engine.name = 'Engine';
 
 function Engine(_configuration) {
   this._configuration = _configuration;
+  this._dual = true;
 }
 
 Engine.prototype.connect = function(callback) {
