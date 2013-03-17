@@ -1,15 +1,15 @@
 #!/usr/bin/env node
 
-require("./proof")(3, function (async, relatable, resetManufacturer, deepEqual) {
+require("./proof")(3, function (step, relatable, resetManufacturer, deepEqual) {
   var mutator;
 
-  async(function () {
+  step(function () {
 
-      resetManufacturer(async());
+      resetManufacturer(step());
 
   }, function () {
 
-      relatable.select("SELECT * FROM product", async());
+      relatable.select("SELECT * FROM product", step());
 
   }, function (results) {
 
@@ -25,7 +25,7 @@ require("./proof")(3, function (async, relatable, resetManufacturer, deepEqual) 
           SELECT * FROM  manufacturer \
           SELECT * \
             FROM product AS products ON products.manufacturer_id = manufacturer.id \
-        ", async());
+        ", step());
 
   }, function  (results) {
 
@@ -42,7 +42,7 @@ require("./proof")(3, function (async, relatable, resetManufacturer, deepEqual) 
             FROM sale_item AS item ON item.sale_id = sale.id \
             JOIN product AS products ON products.manufacturer_id = item.manufacturer_id \
                                     AND products.manufacturer_code = item.manufacturer_code \
-        ", async());
+        ", step());
 
   }, function (results) {
 

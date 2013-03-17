@@ -1,16 +1,16 @@
 #!/usr/bin/env node
 
-require("./proof")(5, function (async, compiler, schema, equal, deepEqual) {
+require("./proof")(5, function (step, compiler, schema, equal, deepEqual) {
   var structure, actual, expected, length;
 
-  async(function () {
+  step(function () {
     compiler.compile(" \
       SELECT * FROM Sale AS sale \
       SELECT products.* \
         FROM SaleItem AS item ON sale.id = item.saleId \
         JOIN Product AS products ON products.manufacturerId = item.manufacturerId \
                                 AND products.manufacturerCode = item.manufacturerCode \
-    ", schema, async());
+    ", schema, step());
   },
 
   function (compilation) {

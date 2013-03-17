@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
-require("./proof")(12, function (async, compiler, schema, equal, deepEqual) {
+require("./proof")(12, function (step, compiler, schema, equal, deepEqual) {
   var structure, expected, actual, length;
 
-  async(function () {
-    compiler.compile("SELECT * FROM Product", schema, async());
+  step(function () {
+    compiler.compile("SELECT * FROM Product", schema, step());
   },
 
   function (compilation) {
@@ -26,7 +26,7 @@ require("./proof")(12, function (async, compiler, schema, equal, deepEqual) {
       SELECT * \
         FROM Product \
         JOIN Manufacturer ON Product.manufacturerId = Manufacturer.id \
-    ", schema, async());
+    ", schema, step());
   },
 
   function (compilation) {
@@ -52,7 +52,7 @@ require("./proof")(12, function (async, compiler, schema, equal, deepEqual) {
       SELECT * FROM  Manufacturer AS manufacturer \
       SELECT * \
         FROM Product AS products ON products.manufacturerId = manufacturer.id \
-    ", schema, async());
+    ", schema, step());
   },
 
   function (compilation) {

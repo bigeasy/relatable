@@ -1,43 +1,43 @@
 #!/usr/bin/env node
 
-require("./proof")(5, function (async, relatable, resetManufacturer, equal, deepEqual) {
+require("./proof")(5, function (step, relatable, resetManufacturer, equal, deepEqual) {
   var mutator;
 
-  async(function () {
+  step(function () {
 
-    resetManufacturer(async());
+    resetManufacturer(step());
 
   }, function () {
 
     mutator = relatable.mutate();  
     mutator.update("Manufacturer(id)", { name: "Axme", id: 1 });
-    mutator.commit(async());
+    mutator.commit(step());
 
   }, function () {
 
-    relatable.select("SELECT * FROM manufacturer", async());
+    relatable.select("SELECT * FROM manufacturer", step());
 
   }, function (manufacturers) {
 
     equal("Axme", manufacturers[0].name, "key only");
   
-    resetManufacturer(async());
+    resetManufacturer(step());
 
   }, function () {
 
     mutator = relatable.mutate();  
     mutator.update("Manufacturer(id) name", { name: "Axme", id: 1 });
-    mutator.commit(async());
+    mutator.commit(step());
 
   }, function () {
 
-    relatable.select("SELECT * FROM manufacturer", async());
+    relatable.select("SELECT * FROM manufacturer", step());
   
   }, function (manufacturers) {
 
     equal("Axme", manufacturers[0].name, "specific field");
 
-    resetManufacturer(async());
+    resetManufacturer(step());
 
   }, function () {
 
@@ -47,47 +47,47 @@ require("./proof")(5, function (async, relatable, resetManufacturer, equal, deep
       parameters: { name: "Axme" },
       where:      { id: 1 }
     });
-    mutator.commit(async());
+    mutator.commit(step());
 
   }, function () {
 
-    relatable.select("SELECT * FROM manufacturer", async());
+    relatable.select("SELECT * FROM manufacturer", step());
   
   }, function (manufacturers) {
 
     equal("Axme", manufacturers[0].name, "explicit");
 
-    resetManufacturer(async());
+    resetManufacturer(step());
 
   }, function () {
 
     mutator = relatable.mutate();  
     mutator.update("Manufacturer(id) name = 'Axme'", { name: "Axme", id: 1 });
-    mutator.commit(async());
+    mutator.commit(step());
 
   }, function () {
 
-    relatable.select("SELECT * FROM manufacturer", async());
+    relatable.select("SELECT * FROM manufacturer", step());
   
   }, function (manufacturers) {
 
     equal("Axme", manufacturers[0].name, "with literal");
 
-    resetManufacturer(async());
+    resetManufacturer(step());
 
   }, function () {
 
-    relatable.sql("INSERT INTO Manufacturer (name) VALUES('Acme')", async());
+    relatable.sql("INSERT INTO Manufacturer (name) VALUES('Acme')", step());
 
   }, function () {
 
     mutator = relatable.mutate();  
     mutator.update("Manufacturer(name) name", { name: "Acme" }, { name: "Axme" });
-    mutator.commit(async());
+    mutator.commit(step());
 
   }, function () {
 
-    relatable.select("SELECT * FROM manufacturer", async());
+    relatable.select("SELECT * FROM manufacturer", step());
   
   }, function (manufacturers) {
 
