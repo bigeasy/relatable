@@ -10,10 +10,8 @@
 ,   "url" :             "http://bigeasy.github.com/relatable"
 ,   "keywords" :        ["orm", "json", "sql", "rdbms", "postgresql", "mysql", "database"]
 ,   "devDependencies":
-    { "coffee-script": ">=1.3.0"
-    , "mysql": "~0"
+    { "mysql": "~0"
     , "pg": ">=0"
-    , "streamline": ">=0.3.0"
     , "proof": "0.0.17" }
 ,   "scripts" :         { "test": "(proof run t/*/*.t.js | tee .proof.out | proof progress) || (proof errors < .proof.out)" }
 }
