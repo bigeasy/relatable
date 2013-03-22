@@ -50,3 +50,8 @@ extent of the language. It doesn't need to be more.
 Also, it is the case that you don't want to have queries and data entry be two
 sides of the same coin. That doesn't mean that the data entry cannot also have a
 higher level language, an object mapping language, shudder.
+
+## Inbox
+
+ * Because relatable demands that you paginate your responses, because of this,
+ you're able to devise a straight-forward caching solution, if you want to.
