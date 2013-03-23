@@ -1,4 +1,11 @@
-var re = {};
+var re = {}, __slice = [].slice;
+
+function die () {
+  console.log.apply(console, __slice.call(arguments, 0));
+  process.exit(1);
+}
+
+function say () { console.log.apply(console, __slice.call(arguments, 0)) }
 
 function compileRegularExpressions() {
   var name, $, lines, i, I, source;
@@ -201,11 +208,19 @@ function Scanner () {
       )
       $
     i*/].exec(rest);
+
+    // We want to skip DISTINCT and the contents of DISTINCT ON(expression), so
+    // if we have DISTINCT ON, we skip what's between the parenthesis.
     if (!$) throw new Error(error("badness"));
     before.push($[1]);
     rest = $[3];
     if ($[2]) skipParenthesis();
 
+    // Here we consume our SELECT columns, looking for all, and handling our
+    // special case of sub-selects. We get the column part first, the alias if
+    // there is any.
+
+    var columnStart = true;
     for (;;) {
       switch (rest[0]) {
       case "*":
@@ -237,6 +252,14 @@ function Scanner () {
           value.push(name);
           token({ type: "tableAll", table: table });
           before.push(space);
+        } else if (rest[0] = '(') {
+          before.push(name, space, bump());
+          skipParenthesis();
+          if (!($ = /^(\s*AS\s+\S+\s*)([^\u0000]*)$/i.exec((rest)))) {
+            $ = /^(\s*)([^\u0000]*)$/.exec(rest);
+          }
+          before.push($[1]);
+          rest = $[2];
         }
       }
 
