@@ -15,7 +15,7 @@ function extend (to, from) {
 // Too many flavors of signature, only one necesary.
 exports.update = function() {
   var definition = arguments[0], splat = __slice.call(arguments, 1),
-      operation, key, object, update, where, star; 
+      operation, key, object, update, where, star;
   if (typeof definition === "object" && splat.length === 0) {
     operation = { type: "update" };
     for (key in definition) {

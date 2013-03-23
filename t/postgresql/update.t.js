@@ -9,7 +9,7 @@ require("./proof")(5, function (step, relatable, resetManufacturer, equal, deepE
 
   }, function () {
 
-    mutator = relatable.mutate();  
+    mutator = relatable.mutate();
     mutator.update("Manufacturer(id)", { name: "Axme", id: 1 });
     mutator.commit(step());
 
@@ -20,19 +20,19 @@ require("./proof")(5, function (step, relatable, resetManufacturer, equal, deepE
   }, function (manufacturers) {
 
     equal("Axme", manufacturers[0].name, "key only");
-  
+
     resetManufacturer(step());
 
   }, function () {
 
-    mutator = relatable.mutate();  
+    mutator = relatable.mutate();
     mutator.update("Manufacturer(id) name", { name: "Axme", id: 1 });
     mutator.commit(step());
 
   }, function () {
 
     relatable.select("SELECT * FROM manufacturer", step());
-  
+
   }, function (manufacturers) {
 
     equal("Axme", manufacturers[0].name, "specific field");
@@ -41,7 +41,7 @@ require("./proof")(5, function (step, relatable, resetManufacturer, equal, deepE
 
   }, function () {
 
-    mutator = relatable.mutate();  
+    mutator = relatable.mutate();
     mutator.update({
       table:      "Manufacturer",
       parameters: { name: "Axme" },
@@ -52,7 +52,7 @@ require("./proof")(5, function (step, relatable, resetManufacturer, equal, deepE
   }, function () {
 
     relatable.select("SELECT * FROM manufacturer", step());
-  
+
   }, function (manufacturers) {
 
     equal("Axme", manufacturers[0].name, "explicit");
@@ -61,14 +61,14 @@ require("./proof")(5, function (step, relatable, resetManufacturer, equal, deepE
 
   }, function () {
 
-    mutator = relatable.mutate();  
+    mutator = relatable.mutate();
     mutator.update("Manufacturer(id) name = 'Axme'", { name: "Axme", id: 1 });
     mutator.commit(step());
 
   }, function () {
 
     relatable.select("SELECT * FROM manufacturer", step());
-  
+
   }, function (manufacturers) {
 
     equal("Axme", manufacturers[0].name, "with literal");
@@ -81,18 +81,18 @@ require("./proof")(5, function (step, relatable, resetManufacturer, equal, deepE
 
   }, function () {
 
-    mutator = relatable.mutate();  
+    mutator = relatable.mutate();
     mutator.update("Manufacturer(name) name", { name: "Acme" }, { name: "Axme" });
     mutator.commit(step());
 
   }, function () {
 
     relatable.select("SELECT * FROM manufacturer", step());
-  
+
   }, function (manufacturers) {
 
     var names = manufacturers.map(function (manufacturer) { return manufacturer.name });
     deepEqual(names, [ "Axme", "Axme" ], "update identity one");
-  
+
   });
 });

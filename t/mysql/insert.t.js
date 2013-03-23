@@ -55,7 +55,7 @@ require("./proof")(7, function (step, relatable, resetManufacturer, ok, equal, d
       deepEqual(names, [ "Acme", "Yoyodyne" ], "insert explicit");
 
       resetManufacturer(step());
-  
+
   }, function () {
 
       mutator = relatable.mutate();

@@ -72,7 +72,7 @@ Engine.prototype.schema = function(callback) {
           USING (constraint_catalog, constraint_schema, constraint_name,\n\
                  table_name, table_schema, table_catalog)\n\
        WHERE constraint_type = 'PRIMARY KEY'\n\
-      ", okay(keys)); 
+      ", okay(keys));
   }
 
   function keys (results) {

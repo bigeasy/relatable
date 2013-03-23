@@ -3,7 +3,7 @@ module.exports = require("proof")(function (async) {
     , fs = require("fs")
     , compiler = require("../../compiler")
     ;
-  
+
   var object =  { id: 1, rgt: 1, lft: 2, permalink: "home" }, mysql, schema = { public: {} }, client;
 
   async(function () {
@@ -30,7 +30,7 @@ module.exports = require("proof")(function (async) {
     });
 
     client.destroy();
-  
+
     return { schema: schema, compiler: compiler, object: object };
   });
 });

@@ -81,7 +81,7 @@ Engine.prototype._describe = function (callback) {
                  table_name, table_schema)\n\
        WHERE constraint_type = 'PRIMARY KEY'\n\
          AND constraint_schema = ?\n\
-      ", [ engine._configuration.name ], okay(keys)); 
+      ", [ engine._configuration.name ], okay(keys));
   }
 
   function keys (results) {

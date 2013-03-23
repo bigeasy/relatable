@@ -120,7 +120,7 @@ function Scanner () {
     sql = sql.join("");
     return [ sql, terminal ];
   }
-         
+
   function skipParenthesis () {
     var depth = 1, $;
     while (depth) {
@@ -239,13 +239,13 @@ function Scanner () {
           before.push(space);
         }
       }
-          
+
       if (rest[0] != ",") break;
       $ = /^(,\s*)([^\u0000]*)/.exec(rest);
       before.push($[1]);
       rest = $[2];
     }
-      
+
     $ = /^(FROM)(\s+)([^\u0000]*)$/i.exec(rest);
     if (! $) throw new Error(error("FROM expected"));
     value.push($[1]);

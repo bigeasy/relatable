@@ -176,7 +176,7 @@ function Mutator(relatable, schema, connection) {
 }
 
 Mutator.prototype._connect = function () {
-  var mutator = this; 
+  var mutator = this;
   mutator.connected = true;
   mutator.relatable._engine.connect(function (error, schema, connection) {
     mutator.schema = schema;
@@ -211,7 +211,7 @@ Mutator.prototype._dequeue = function () {
       });
       break;
     }
-  } 
+  }
 }
 
 Mutator.prototype.commit = function (callback) {
@@ -270,7 +270,7 @@ Mutator.prototype.insertIf = function (pattern) {
 }
 
 Mutator.prototype.update = function (pattern) {
-  var mutator = this, shiftable = __slice.call(arguments, 1), callback; 
+  var mutator = this, shiftable = __slice.call(arguments, 1), callback;
   if (typeof shiftable[shiftable.length - 1] == "function") {
     callback = shiftable.pop();
   }

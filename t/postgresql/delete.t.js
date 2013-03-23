@@ -22,7 +22,7 @@ require("./proof")(2, function (step, relatable, resetManufacturer, deepEqual) {
     relatable.select("SELECT * FROM manufacturer", step());
 
   }, function (manufacturers) {
-    
+
     var names = manufacturers.map(function (manufacturer) { return manufacturer.name });
     deepEqual(names, [ "Acme" ], "with key");
 
@@ -30,7 +30,7 @@ require("./proof")(2, function (step, relatable, resetManufacturer, deepEqual) {
 
   }, function () {
 
-    relatable.sql("INSERT INTO Manufacturer (name) VALUES('Yoyodyne')", step()); 
+    relatable.sql("INSERT INTO Manufacturer (name) VALUES('Yoyodyne')", step());
 
   }, function () {
 
@@ -43,7 +43,7 @@ require("./proof")(2, function (step, relatable, resetManufacturer, deepEqual) {
     relatable.select("SELECT * FROM manufacturer", step());
 
   }, function (manufacturers) {
-    
+
     var names = manufacturers.map(function (manufacturer) { return manufacturer.name });
     deepEqual(names, [ "Acme" ], "no key");
 

@@ -2,7 +2,7 @@
 
 require("./proof")(2, function (step, equal, compiler, schema) {
   var structure, actual, expected, length;
-  
+
   step(function () {
     compiler.compile(" \
       SELECT products.* \
