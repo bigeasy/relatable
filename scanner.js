@@ -236,6 +236,7 @@ function Scanner () {
           token({ type: "subselect" });
           _query(rest, true);
           before.push(bump());
+          token({ type: "collection" });
           if (!($ = /^(\s*AS\s+\S+\s*)([^\u0000]*)$/i.exec((rest))))
             $ = /^(\s*)([^\u0000]*)$/.exec(rest);
           before.push($[1]);
@@ -335,7 +336,7 @@ function Scanner () {
         ^
         (
           (?:
-            [^('sS]         // any other character
+            [^)('sS]         // any other character
             |
             S(?!ELECT)      // s, but not select
             |
@@ -361,6 +362,9 @@ function Scanner () {
         if (select == "(") {
           before.push(bump());
           skipParenthesis();
+        } else if (rest[0] == ")") {
+          if (subselect) return;
+          before.push(bump());
         } else {
           token({ type: "rest" });
           _query(rest, true);

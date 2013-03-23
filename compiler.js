@@ -131,15 +131,41 @@ exports.insert = function(definition, object, type) {
 };
 
 exports.compile = function(sql, schema, callback) {
-  var scan = scanner.query(sql), selects = [[]];
+  var scan = scanner.query(sql), selects = [[]], count = 0;
   scan.forEach(function (part) {
     selects[0].push(part);
-    if (part.type === "rest") {
-      selects.unshift([]);
-    }
+    if (part.type == "subselect") count++;
+    if (part.type == "collection") count--;
+    if (!count && part.type == "rest") selects.unshift([]);
   });
+
+  var queue = selects.pop(), root = [], depth = 0, subselect, done;
+  while (queue.length) {
+    if (queue[0].type == "subselect") {
+      root.push(queue.shift());
+      subselect = [], done = false;
+      while (!done && queue.length) {
+        if (queue[0].type == "subselect") {
+          depth++;
+          continue;
+        } else if (queue[0].type == "collection") {
+          if (depth) {
+            depth--;
+          } else {
+            done = true;
+          }
+        }
+        subselect.push(queue.shift());
+      }
+      selects.push(subselect);
+    } else {
+      root.push(queue.shift());
+    }
+  }
+
+  selects.push(root);
   compileSelect([], selects.pop(), schema, function(error, result) {
-    return compileSelects([result.structure], selects, schema, callback);
+    compileSelects([result.structure], selects, schema, callback);
   });
 };
 
