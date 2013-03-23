@@ -140,13 +140,13 @@ function Scanner () {
   function skipParenthesis () {
     var depth = 1, $;
     while (depth) {
-      // Can't find a closing parenthisis.
+      // Can't find a closing parenthesis.
       if (!rest.length) {
-        throw new Error(error("unmatched curly brace"));
+        throw new Error(error("unmatched parenthesis"));
       }
 
-      // Skip over any valid code that is not an open or closed parenthsis,
-      // skiping over strings as well, so we don't include any parenthesis that
+      // Skip over any valid code that is not an open or closed parenthesis,
+      // skipping over strings as well, so we don't include any parentheses that
       // are part of a string literal.
       $ = re["sql" /*
         ^
@@ -164,9 +164,9 @@ function Scanner () {
       before.push($[1]);
       rest = $[2];
 
-      // Can't find a closing curly brace.
+      // Can't find a closing parenthesis.
       if (!rest.length)
-        throw new Error(error("unmatched curly brace"));
+        throw new Error(error("unmatched parenthesis"));
 
       // Match either an opening parenthesis or a closing parenthesis before
       // continuing with the loop.
@@ -196,7 +196,7 @@ function Scanner () {
 
   function _query ($, subselect) {
     rest = $;
-    // Let's get past SELECT and DISINCT.
+    // Let's get past SELECT and DISTINCT.
     $ = re["select" /*
       ^
       (
