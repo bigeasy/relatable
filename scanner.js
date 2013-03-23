@@ -45,7 +45,7 @@ function Scanner () {
   function identifier (message) {
     var identifier, $, name, space;
     if (rest[0] != "") {
-      $ = /^([^\s.(,]+)(\s*)([^\u0000]*)/.exec(rest);
+      $ = /^([^\s.)(,]+)(\s*)([^\u0000]*)/.exec(rest);
       name = $[1], space = $[2], rest = $[3];
       if (rest[0] == "(") {
         if (messsage) {
@@ -185,7 +185,7 @@ function Scanner () {
     return _query(text = $);
   }
 
-  function _query ($, join) {
+  function _query ($, subselect) {
     rest = $;
     // Let's get past SELECT and DISINCT.
     $ = re["select" /*
@@ -231,14 +231,26 @@ function Scanner () {
         before = [ $[1] || "" ],  rest = $[2];
         break;
       case "(":
-        before.push(bump());
-        skipParenthesis();
-        if ($ = /^(\s*AS\s+\S+\s*)([^\u0000]*)$/i.exec((rest))) {
+        if (/^\(\s*SELECT/.test(rest)) {
+          before.push(bump());
+          token({ type: "subselect" });
+          _query(rest, true);
+          before.push(bump());
+          if (!($ = /^(\s*AS\s+\S+\s*)([^\u0000]*)$/i.exec((rest))))
+            $ = /^(\s*)([^\u0000]*)$/.exec(rest);
+          before.push($[1]);
+          rest = $[2];
+        } else {
+          before.push(bump());
+          skipParenthesis();
+          if (!($ = /^(\s*AS\s+\S+\s*)([^\u0000]*)$/i.exec((rest))))
+            $ = /^(\s*)([^\u0000]*)$/.exec(rest);
           before.push($[1]);
           rest = $[2];
         }
         break;
       default:
+        // This is either a qualified column name or a function call.
         $ = /^([^\s.(]+)(\s*)([^\u0000]+)/.exec(rest);
         var name = $[1], space = $[2]
         rest = $[3];
@@ -301,7 +313,7 @@ function Scanner () {
             before = [ paren ];
           }
           var conditions = [];
-          if (index != 0 || join) {
+          if (index != 0 || subselect) {
             next(/^(ON\s+)([^\u0000]*)$/, "ON expected");
             qualifiedName({ type: "left", index: index });
             next(/^(=\s*)([^\u0000]*)$/, "= expected");
@@ -313,6 +325,10 @@ function Scanner () {
       before.push($[1]);
       rest = $[2];
       index++;
+    }
+    if (rest[0] == ')' && subselect) {
+      token({ type: 'rest' });
+      return;
     }
     for (;;) {
       $ = re["TODO" /*
