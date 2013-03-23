@@ -79,6 +79,15 @@ function Scanner () {
     }
   }
 
+  function parameter () {
+    token({ type: 'rest' });
+    before.push(bump());
+    var $ = /^(\w[\w\d]+)([^\u0000]*)$/.exec(rest);
+    value.push($[1]);
+    rest = $[2];
+    token({ type: 'parameter' });
+  }
+
   function sql (stop, consume) {
     var sql = []
       , stop = String(stop).replace(/\/(.*)\//, "$1")
@@ -336,7 +345,7 @@ function Scanner () {
         ^
         (
           (?:
-            [^)('sS]         // any other character
+            [^)('sS$]       // No parens, quotes, esses, or dollar signs.
             |
             S(?!ELECT)      // s, but not select
             |
@@ -357,7 +366,6 @@ function Scanner () {
       before.push($[1]);
       rest = $[2];
       var select = $[3];
-
       if (select != null) {
         if (select == "(") {
           before.push(bump());
@@ -365,11 +373,15 @@ function Scanner () {
         } else if (rest[0] == ")") {
           if (subselect) return;
           before.push(bump());
+        } else if (rest[0] == "$") {
+          parameter();
         } else {
           token({ type: "rest" });
           _query(rest, true);
           break;
         }
+      } else if (rest[0] == '$') {
+        parameter();
       } else {
         token({ type: "rest" });
         break;
