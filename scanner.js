@@ -80,7 +80,7 @@ function Scanner () {
   }
 
   function parameter () {
-    token({ type: 'rest' });
+    token({ type: 'stuff' });
     before.push(bump());
     var $ = /^(\w[\w\d]+)([^\u0000]*)$/.exec(rest);
     value.push($[1]);
@@ -376,17 +376,18 @@ function Scanner () {
         } else if (rest[0] == "$") {
           parameter();
         } else {
-          token({ type: "rest" });
+          token({ type: "stuff" });
           _query(rest, true);
           break;
         }
       } else if (rest[0] == '$') {
         parameter();
       } else {
-        token({ type: "rest" });
+        token({ type: "stuff" });
         break;
       }
     }
+    token({ type: "rest" });
     return tokens;
   }
 

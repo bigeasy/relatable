@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-require("./proof")(12, function (step, compiler, schema, equal, deepEqual) {
+require("./proof")(6, function (step, compiler, schema, equal, deepEqual) {
   var structure, expected, actual, length;
 
   step(function () {
@@ -47,41 +47,5 @@ require("./proof")(12, function (step, compiler, schema, equal, deepEqual) {
     equal(actual, expected.substring(0, length), "test correct join sql");
     equal(structure.pivot, "Product", "test correct join pivot");
     deepEqual(structure.parents, { "Manufacturer": "Product" }, "test correct join parents");
-
-    compiler.compile(" \
-      SELECT * FROM  Manufacturer AS manufacturer \
-      SELECT * \
-        FROM Product AS products ON products.manufacturerId = manufacturer.id \
-    ", schema, step());
-  },
-
-  function (compilation) {
-    structure = compilation.structure;
-    expected = " \
-      SELECT manufacturer.id AS manufacturer__id, \
-             manufacturer.name AS manufacturer__name \
-        FROM Manufacturer AS manufacturer \
-    ".trim().replace(/\s+/g, ' ');
-    length = 2000;
-    actual = structure.sql.trim().replace(/\s+/g, ' ').substring(0, length);
-    equal(expected.substring(0, length), actual, "test one to many parent sql");
-    equal(structure.pivot, "manufacturer", "test one to many parent pivot");
-    deepEqual(structure.parents, {}, "test one to many parent parents");
-    expected = " \
-      SELECT products.id AS products__id, \
-             products.manufacturerId AS products__manufacturerId, \
-             products.manufacturerCode AS products__manufacturerCode, \
-             products.name AS products__name \
-        FROM relatable_temporary_N AS manufacturer \
-        JOIN Product AS products ON products.manufacturerId = manufacturer.manufacturer__id \
-    ".trim().replace(/\s+/g, ' ');
-    length = 330;
-    actual = structure.joins[0].sql.trim().replace(/relatable_temporary_\d+/, "relatable_temporary_N").replace(/\s+/g, ' ').substring(0, length)
-    equal(expected.substring(0, length), actual, "test one to many child sql");
-    equal(structure.joins[0].pivot, "products", "test one to many child piviot");
-    deepEqual({
-      table: "manufacturer",
-      fields: { id: "manufacturerId" }
-    }, structure.joins[0].join, "test one to many child joins");
   });
 });

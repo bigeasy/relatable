@@ -241,7 +241,7 @@ function compileSelect (path, scan, schema, callback) {
   });
   var seen = {}, selected = [], columns = [],
       structure = { temporary: "relatable_temporary_" + (++identifier) },
-      table, alias;
+      table, alias, parameters = [];
   while (expansions.length) {
     if (expansions[0].expansions.length) {
       $ = expansions[0].expansions.shift(), table = $[0], alias = $[1];
@@ -332,12 +332,22 @@ function compileSelect (path, scan, schema, callback) {
       case "rest":
         sql.push(token.before);
         sql.push(token.value || "");
+        break;
+      case "stuff":
+        sql.push(token.before);
+        sql.push(token.value || "");
+        break;
+      case "parameter":
+        parameters.push(function ($) { return $[token.value] });
+        sql.push('?');
+        break;
     }
   });
   extend(structure, {
     sql: sql.join(""),
     parents: parents,
     pivot: pivot,
+    parameters: parameters,
     joins: []
   });
   callback(null, { structure: structure, scan: scan });

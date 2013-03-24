@@ -5,11 +5,13 @@ require("./proof")(5, function (step, compiler, schema, equal, deepEqual) {
 
   step(function () {
     compiler.compile(" \
-      SELECT * FROM Sale AS sale \
-      SELECT products.* \
-        FROM SaleItem AS item ON item.saleId = sale.id \
-        JOIN Product AS products ON products.manufacturerId = item.manufacturerId \
-                                AND products.manufacturerCode = item.manufacturerCode \
+      SELECT *, ( \
+              SELECT products.* \
+                FROM SaleItem AS item ON item.saleId = sale.id \
+                JOIN Product AS products ON products.manufacturerId = item.manufacturerId \
+                                        AND products.manufacturerCode = item.manufacturerCode \
+             ) \
+        FROM Sale AS sale \
     ", schema, step());
   },
 
