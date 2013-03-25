@@ -2,10 +2,10 @@ var Mutator = require("./engine").Mutator, Client = require("mysql").Client, __s
 
 function die () {
   console.log.apply(console, __slice.call(arguments, 0));
-  return process.exit(1);
+  process.exit(1);
 }
 
-function say () { return console.log.apply(console, __slice.call(arguments, 0)) }
+function say () { console.log.apply(console, __slice.call(arguments, 0)) }
 
 function validator (callback) {
   return function (forward) { return check(callback, forward) }
