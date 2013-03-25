@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-require("./proof")(2, function (step, equal, compiler, schema) {
+require("./proof")(2, function (step, equal, compiler, schema, placeholder) {
   var structure, actual, expected, length;
 
   step(function () {
@@ -10,7 +10,7 @@ require("./proof")(2, function (step, equal, compiler, schema) {
         JOIN Product AS products ON products.manufacturerId = item.manufacturerId \
                                 AND products.manufacturerCode = item.manufacturerCode \
         WHERE item.sale_id = ? \
-    ", schema, step());
+    ", schema, placeholder, step());
   },
 
 

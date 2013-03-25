@@ -31,6 +31,8 @@ module.exports = require("proof")(function (step) {
 
     client.destroy();
 
-    return { schema: schema, compiler: compiler, object: object };
+    function placeholder () { return '?' }
+
+    return { schema: schema, compiler: compiler, object: object, placeholder: placeholder };
   });
 });

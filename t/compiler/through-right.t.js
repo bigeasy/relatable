@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-require("./proof")(5, function (step, compiler, schema, equal, deepEqual) {
+require("./proof")(5, function (step, compiler, schema, placeholder, equal, deepEqual) {
   var structure, actual, expected, length;
 
   step(function () {
@@ -12,7 +12,7 @@ require("./proof")(5, function (step, compiler, schema, equal, deepEqual) {
                                         AND products.manufacturerCode = item.manufacturerCode \
              ) \
         FROM Sale AS sale \
-    ", schema, step());
+    ", schema, placeholder, step());
   },
 
   function (compilation) {

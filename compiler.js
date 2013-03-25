@@ -130,7 +130,8 @@ exports.insert = function(definition, object, type) {
   return operation;
 };
 
-exports.compile = function(sql, schema, callback) {
+exports.compile = function(sql, schema, placeholder, callback) {
+  if (arguments.length != 4) throw new Error();
   var scan = scanner.query(sql), selects = [[]], count = 0;
   scan.forEach(function (part) {
     selects[0].push(part);
@@ -164,23 +165,23 @@ exports.compile = function(sql, schema, callback) {
   }
 
   selects.push(root);
-  compileSelect([], selects.pop(), schema, function(error, result) {
-    compileSelects([result.structure], selects, schema, callback);
+  compileSelect([], selects.pop(), schema, placeholder, function(error, result) {
+    compileSelects([result.structure], selects, schema, placeholder, callback);
   });
 };
 
-function compileSelects (path, selects, schema, callback) {
+function compileSelects (path, selects, schema, placeholder, callback) {
   if (selects.length == 1) {
     callback(null, { structure: path[0] });
   } else {
-    compileSelect(path, selects.pop(), schema, function(error) {
+    compileSelect(path, selects.pop(), schema, placeholder, function(error) {
       if (error) callback(error);
-      else compileSelects(path, selects, schema, callback);
+      else compileSelects(path, selects, schema, placeholder, callback);
     });
   }
 }
 
-function compileSelect (path, scan, schema, callback) {
+function compileSelect (path, scan, schema, placeholder, callback) {
   var all = false, expansions = [], tables = [], parents = {}, selected = {},
       $, pivot, through, i, I, token, left, right;
   for (i = 0, I = scan.length; i < I; i++) {
@@ -320,6 +321,7 @@ function compileSelect (path, scan, schema, callback) {
   sql.push(from.value);
   sql.push(token.before);
   sql.push(token.value);
+  var index = 0;
   scan.forEach(function (token) {
     switch (token.type) {
       case "table":
@@ -339,7 +341,7 @@ function compileSelect (path, scan, schema, callback) {
         break;
       case "parameter":
         parameters.push(function ($) { return $[token.value] });
-        sql.push('?');
+        sql.push(placeholder(index++));
         break;
     }
   });

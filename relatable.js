@@ -28,7 +28,7 @@ function Selection(relatable, schema, connection, sql, parameters, close, callba
 
 Selection.prototype.execute = function () {
   var selection = this;
-  compiler.compile(selection.sql, selection.schema, function (error, result) {
+  compiler.compile(selection.sql, selection.schema, selection.connection._placeholder, function (error, result) {
     var parameters, structure;
     structure = result.structure;
     if (Array.isArray(selection.parameters)) {
