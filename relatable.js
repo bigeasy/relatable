@@ -35,6 +35,12 @@ Selection.prototype.execute = function () {
       parameters = {};
       parameters[structure.pivot] = selection.parameters;
       selection.parameters = parameters;
+    } else if (typeof selection.parameters == "object") {
+      parameters = structure.parameters.map(function (parameter) {
+        return parameter(selection.parameters);
+      });
+      selection.parameters = {}
+      selection.parameters[structure.pivot] = parameters;
     }
     selection.select([structure]);
   });
