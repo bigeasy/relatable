@@ -1,16 +1,18 @@
 #!/usr/bin/env node
 
-require("./proof")(5, function (step, compiler, schema, equal, deepEqual) {
+require("./proof")(5, function (step, compiler, schema, placeholder, equal, deepEqual) {
   var structure, expected, actual, length;
 
   step(function () {
     compiler.compile(" \
-      SELECT * FROM Sale AS sale \
-      SELECT products.* \
-        FROM SaleItem AS item ON item.saleId = sale.id \
-        JOIN Product AS products ON products.manufacturerId = item.manufacturerId \
-                                AND products.manufacturerCode = item.manufacturerCode \
-    ", schema, step());
+      SELECT *, ( \
+              SELECT products.* \
+                FROM SaleItem AS item ON item.saleId = sale.id \
+                JOIN Product AS products ON products.manufacturerId = item.manufacturerId \
+                                        AND products.manufacturerCode = item.manufacturerCode \
+             ) \
+        FROM Sale AS sale \
+    ", schema, placeholder, step());
   },
 
   function (compilation) {

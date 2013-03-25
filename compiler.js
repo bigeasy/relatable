@@ -2,10 +2,10 @@ var scanner = require("./scanner"), identifier = 0, __slice = [].slice;
 
 function die () {
   console.log.apply(console, __slice.call(arguments, 0));
-  return process.exit(1);
+  process.exit(1);
 }
 
-function say () { return console.log.apply(console, __slice.call(arguments, 0)) }
+function say () { console.log.apply(console, __slice.call(arguments, 0)) }
 
 function extend (to, from) {
   for (var key in from) to[key] = from[key];
@@ -130,7 +130,8 @@ exports.insert = function(definition, object, type) {
   return operation;
 };
 
-exports.compile = function(sql, schema, callback) {
+exports.compile = function(sql, schema, placeholder, callback) {
+  if (arguments.length != 4) throw new Error();
   var scan = scanner.query(sql), selects = [[]], count = 0;
   scan.forEach(function (part) {
     selects[0].push(part);
@@ -164,23 +165,23 @@ exports.compile = function(sql, schema, callback) {
   }
 
   selects.push(root);
-  compileSelect([], selects.pop(), schema, function(error, result) {
-    compileSelects([result.structure], selects, schema, callback);
+  compileSelect([], selects.pop(), schema, placeholder, function(error, result) {
+    compileSelects([result.structure], selects, schema, placeholder, callback);
   });
 };
 
-function compileSelects (path, selects, schema, callback) {
+function compileSelects (path, selects, schema, placeholder, callback) {
   if (selects.length == 1) {
     callback(null, { structure: path[0] });
   } else {
-    compileSelect(path, selects.pop(), schema, function(error) {
+    compileSelect(path, selects.pop(), schema, placeholder, function(error) {
       if (error) callback(error);
-      else compileSelects(path, selects, schema, callback);
+      else compileSelects(path, selects, schema, placeholder, callback);
     });
   }
 }
 
-function compileSelect (path, scan, schema, callback) {
+function compileSelect (path, scan, schema, placeholder, callback) {
   var all = false, expansions = [], tables = [], parents = {}, selected = {},
       $, pivot, through, i, I, token, left, right;
   for (i = 0, I = scan.length; i < I; i++) {
@@ -241,7 +242,7 @@ function compileSelect (path, scan, schema, callback) {
   });
   var seen = {}, selected = [], columns = [],
       structure = { temporary: "relatable_temporary_" + (++identifier) },
-      table, alias;
+      table, alias, parameters = [];
   while (expansions.length) {
     if (expansions[0].expansions.length) {
       $ = expansions[0].expansions.shift(), table = $[0], alias = $[1];
@@ -320,6 +321,7 @@ function compileSelect (path, scan, schema, callback) {
   sql.push(from.value);
   sql.push(token.before);
   sql.push(token.value);
+  var index = 0;
   scan.forEach(function (token) {
     switch (token.type) {
       case "table":
@@ -332,12 +334,22 @@ function compileSelect (path, scan, schema, callback) {
       case "rest":
         sql.push(token.before);
         sql.push(token.value || "");
+        break;
+      case "stuff":
+        sql.push(token.before);
+        sql.push(token.value || "");
+        break;
+      case "parameter":
+        parameters.push(function ($) { return $[token.value] });
+        sql.push(placeholder(index++));
+        break;
     }
   });
   extend(structure, {
     sql: sql.join(""),
     parents: parents,
     pivot: pivot,
+    parameters: parameters,
     joins: []
   });
   callback(null, { structure: structure, scan: scan });

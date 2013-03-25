@@ -79,6 +79,15 @@ function Scanner () {
     }
   }
 
+  function parameter () {
+    token({ type: 'stuff' });
+    before.push(bump());
+    var $ = /^(\w[\w\d]+)([^\u0000]*)$/.exec(rest);
+    value.push($[1]);
+    rest = $[2];
+    token({ type: 'parameter' });
+  }
+
   function sql (stop, consume) {
     var sql = []
       , stop = String(stop).replace(/\/(.*)\//, "$1")
@@ -131,13 +140,13 @@ function Scanner () {
   function skipParenthesis () {
     var depth = 1, $;
     while (depth) {
-      // Can't find a closing parenthisis.
+      // Can't find a closing parenthesis.
       if (!rest.length) {
-        throw new Error(error("unmatched curly brace"));
+        throw new Error(error("unmatched parenthesis"));
       }
 
-      // Skip over any valid code that is not an open or closed parenthsis,
-      // skiping over strings as well, so we don't include any parenthesis that
+      // Skip over any valid code that is not an open or closed parenthesis,
+      // skipping over strings as well, so we don't include any parentheses that
       // are part of a string literal.
       $ = re["sql" /*
         ^
@@ -155,9 +164,9 @@ function Scanner () {
       before.push($[1]);
       rest = $[2];
 
-      // Can't find a closing curly brace.
+      // Can't find a closing parenthesis.
       if (!rest.length)
-        throw new Error(error("unmatched curly brace"));
+        throw new Error(error("unmatched parenthesis"));
 
       // Match either an opening parenthesis or a closing parenthesis before
       // continuing with the loop.
@@ -187,7 +196,7 @@ function Scanner () {
 
   function _query ($, subselect) {
     rest = $;
-    // Let's get past SELECT and DISINCT.
+    // Let's get past SELECT and DISTINCT.
     $ = re["select" /*
       ^
       (
@@ -336,7 +345,7 @@ function Scanner () {
         ^
         (
           (?:
-            [^)('sS]         // any other character
+            [^)('sS$]       // No parens, quotes, esses, or dollar signs.
             |
             S(?!ELECT)      // s, but not select
             |
@@ -357,7 +366,6 @@ function Scanner () {
       before.push($[1]);
       rest = $[2];
       var select = $[3];
-
       if (select != null) {
         if (select == "(") {
           before.push(bump());
@@ -365,16 +373,21 @@ function Scanner () {
         } else if (rest[0] == ")") {
           if (subselect) return;
           before.push(bump());
+        } else if (rest[0] == "$") {
+          parameter();
         } else {
-          token({ type: "rest" });
+          token({ type: "stuff" });
           _query(rest, true);
           break;
         }
+      } else if (rest[0] == '$') {
+        parameter();
       } else {
-        token({ type: "rest" });
+        token({ type: "stuff" });
         break;
       }
     }
+    token({ type: "rest" });
     return tokens;
   }
 

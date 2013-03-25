@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-require("./proof")(4, function (step, compiler, schema, equal, deepEqual) {
+require("./proof")(4, function (step, compiler, schema, placeholder, equal, deepEqual) {
   var structure, expected, actual, length;
 
   step(function () {
@@ -9,7 +9,7 @@ require("./proof")(4, function (step, compiler, schema, equal, deepEqual) {
              (SELECT * \
                 FROM Product AS products ON products.manufacturerId = manufacturer.id) \
       FROM  Manufacturer AS manufacturer \
-    ", schema, step());
+    ", schema, placeholder, step());
   }, function (compilation) {
     equal(compilation.structure.sql.trim().replace(/\s+/g, ' '),
           'SELECT manufacturer.id AS manufacturer__id, manufacturer.name AS manufacturer__name \

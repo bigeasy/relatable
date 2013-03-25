@@ -2,10 +2,10 @@ var compiler = require("./compiler"), __slice = [].slice;
 
 function die () {
   console.log.apply(console, __slice.call(arguments, 0));
-  return process.exit(1);
+  process.exit(1);
 }
 
-function say () { return console.log.apply(console, __slice.call(arguments, 0)) }
+function say () { console.log.apply(console, __slice.call(arguments, 0)) }
 
 function extend (to, from) {
   for (var key in from) to[key] = from[key];
@@ -28,13 +28,19 @@ function Selection(relatable, schema, connection, sql, parameters, close, callba
 
 Selection.prototype.execute = function () {
   var selection = this;
-  compiler.compile(selection.sql, selection.schema, function (error, result) {
+  compiler.compile(selection.sql, selection.schema, selection.connection._placeholder, function (error, result) {
     var parameters, structure;
     structure = result.structure;
     if (Array.isArray(selection.parameters)) {
       parameters = {};
       parameters[structure.pivot] = selection.parameters;
       selection.parameters = parameters;
+    } else if (typeof selection.parameters == "object") {
+      parameters = structure.parameters.map(function (parameter) {
+        return parameter(selection.parameters);
+      });
+      selection.parameters = {}
+      selection.parameters[structure.pivot] = parameters;
     }
     selection.select([structure]);
   });

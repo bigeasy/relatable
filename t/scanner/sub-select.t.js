@@ -18,7 +18,8 @@ require("./proof")(1, function (scanner, deepEqual) {
       { type: 'collection', before: ')', value: '' },
       { type: 'from', before: '\n      ', value: 'FROM' },
       { alias: 'c', name: 'a', type: 'table', before: ' ', value: 'a AS c' },
-      { type: 'rest', before: '\n    ', value: '' } ], 'scan sub select');
+      { type: 'stuff', before: '\n    ', value: '' },
+      { type: 'rest', before: '', value: '' } ], 'scan sub select');
   tree = scanner.query("\
         SELECT *, \
               (SELECT products.* \
@@ -28,5 +29,4 @@ require("./proof")(1, function (scanner, deepEqual) {
                )\
           FROM sale \
     ");
-  console.log(tree);
 });
