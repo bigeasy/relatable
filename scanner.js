@@ -180,11 +180,14 @@ function Scanner () {
   }
 
   function next (regex, message) {
-    var $ = regex.exec(rest).slice(1), fields;
-    if (!$) throw new Error(error(message));
-    before.push($.shift());
-    rest = $.pop()
-    return $;
+    var $ = regex.exec(rest);
+    if (!$) {
+      if (message) throw new Error(error(message));
+      else return false;
+    }
+    before.push($[1]);
+    rest = $[2];
+    return true;
   }
 
   function query ($) {
@@ -192,6 +195,17 @@ function Scanner () {
     before = [];
     value = [];
     return _query(text = $);
+  }
+
+  function and (index) {
+    if (next(/^(AND\s+)([^\u0000]*)$/)) {
+      qualifiedName({ type: "left", index: index });
+      next(/^(=\s*)([^\u0000]*)$/, "= expected");
+      qualifiedName({ type: "right", index: index });
+      return true;
+    } else {
+      return false;
+    }
   }
 
   function _query ($, subselect) {
@@ -328,6 +342,7 @@ function Scanner () {
             qualifiedName({ type: "left", index: index });
             next(/^(=\s*)([^\u0000]*)$/, "= expected");
             qualifiedName({ type: "right", index: index });
+            while (and(++index));
           }
         }
       }
