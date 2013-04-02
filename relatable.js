@@ -1,4 +1,4 @@
-var compiler = require("./compiler"), __slice = [].slice;
+var compiler = require("./compiler"), __slice = [].slice, cadence = require('cadence');
 
 function die () {
   console.log.apply(console, __slice.call(arguments, 0));
@@ -26,25 +26,27 @@ function Selection(relatable, schema, connection, sql, parameters, close, callba
   this.completed = {};
 }
 
-Selection.prototype.execute = function () {
-  var selection = this;
-  compiler.compile(selection.sql, selection.schema, selection.connection._placeholder, function (error, result) {
-    var parameters, structure;
-    structure = result.structure;
-    if (Array.isArray(selection.parameters)) {
-      parameters = {};
-      parameters[structure.pivot] = selection.parameters;
-      selection.parameters = parameters;
-    } else if (typeof selection.parameters == "object") {
-      parameters = structure.parameters.map(function (parameter) {
-        return parameter(selection.parameters);
+Selection.prototype.execute = cadence(function (step) {
+  step(function () {
+
+    compiler.compile(this.sql, this.schema, this.connection._placeholder, step());
+
+  }, function (compilation) {
+
+    var parameters = this.parameters, structure = compilation.structure;
+    if (Array.isArray(parameters)) {
+      this.parameters = {};
+      this.parameters[structure.pivot] = parameters;
+    } else if (typeof parameters == "object") {
+      this.parameters = {}
+      this.parameters[structure.pivot] = structure.parameters.map(function (parameter) {
+        return parameter(parameters)
       });
-      selection.parameters = {}
-      selection.parameters[structure.pivot] = parameters;
     }
-    selection.select([structure]);
+    this.select([structure]);
+
   });
-};
+});
 
 Selection.prototype.complete = function () {
   var selection = this;
@@ -361,7 +363,8 @@ Relatable.prototype.select = function () {
     parameters = parameters[0];
   }
   relatable._engine.connect(function (error, schema, connection) {
-    relatable._select(schema, connection, sql, parameters, true, callback);
+    if (error) callback(error);
+    else relatable._select(schema, connection, sql, parameters, true, callback);
   });
 };
 

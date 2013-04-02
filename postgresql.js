@@ -1,5 +1,8 @@
 var pg = require("pg"), Mutator = require("./engine").Mutator, __slice = [].slice;
 
+pg.defaults.parseFloat = false;
+pg.defaults.hideDeprecationWarnings = true;
+
 function die () {
   console.log.apply(console, __slice.call(arguments, 0));
   process.exit(1);

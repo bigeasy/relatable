@@ -291,31 +291,35 @@ function compileSelect (path, scan, schema, placeholder, callback) {
     from = scan.shift();
   }
   token = scan.shift();
-  if (path.length) {
-    if (scan[0].table == token.alias) {
-      join = scan[1], first = scan[0];
+  var index = 0;
+  while (path.length && scan[index].type == 'left') {
+    if (scan[index].table == token.alias) {
+      join = scan[index + 1], first = scan[index];
     } else {
-      join = scan[0], first = scan[1];
+      join = scan[index], first = scan[index + 1];
     }
     for (i = path.length - 1; i >= 0; --i) {
       if (path[i].pivot === join.table) {
-        path[i].joins.push(structure);
-        structure.join = {
-          table: path[i].pivot,
-          fields: {}
-        };
+        if (!index) {
+          path[i].joins.push(structure);
+          structure.join = {
+            table: path[i].pivot,
+            fields: {}
+          };
+        }
         if (through) {
           joined = "" + through.table + "." + through.column;
         } else {
           joined = first.column;
         }
         structure.join.fields[join.column] = joined;
-        sql.push(" FROM " + path[i].temporary + " AS " + path[i].pivot);
+        if (!index) sql.push(" FROM " + path[i].temporary + " AS " + path[i].pivot);
         from.value = "JOIN";
         break;
       }
     }
     join.value = "" + join.table + "." + join.table + "__" + join.column;
+    index += 2;
   }
   sql.push(from.before);
   sql.push(from.value);

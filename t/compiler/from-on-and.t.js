@@ -18,6 +18,7 @@ require("./proof")(4, function (step, compiler, schema, placeholder, equal, deep
                   product.name AS product__name FROM product \
            '.trim().replace(/\s+/g, ' '), 'query');
     equal(compilation.structure.temporary, 'relatable_temporary_1', 'query temporary');
+    equal(compilation.structure.joins.length, 1, 'join count');
     var join = compilation.structure.joins[0];
     equal(join.sql.trim().replace(/\s+/g, ' '), '\
           SELECT item.id AS item__id, \
@@ -28,7 +29,7 @@ require("./proof")(4, function (step, compiler, schema, placeholder, equal, deep
                  item.manufacturerCode AS item__manufacturerCode \
             FROM relatable_temporary_1 AS product \
             JOIN saleitem AS item ON product.product__manufacturer_id = item.manufacturer_id \
-                                 AND product.manufacturer_code = item.manufacturer_code \
+                                 AND product.product__manufacturer_code = item.manufacturer_code \
          '.trim().replace(/\s+/g, ' '), 'sub query');
     equal(join.pivot, 'item', 'pivot');
   });
