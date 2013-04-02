@@ -1,9 +1,7 @@
 #!/usr/bin/env node
 
 require("./proof")(5, function (step, compiler, schema, placeholder, equal, deepEqual) {
-  var structure, expected, actual, length;
-
-  step(function () {
+  var compilation =
     compiler.compile(" \
       SELECT *, ( \
               SELECT products.* \
@@ -12,10 +10,8 @@ require("./proof")(5, function (step, compiler, schema, placeholder, equal, deep
                                         AND products.manufacturerCode = item.manufacturerCode \
              ) \
         FROM Sale AS sale \
-    ", schema, placeholder, step());
-  },
+    ", schema, placeholder);
 
-  function (compilation) {
     structure = compilation.structure;
     expected = " \
       SELECT sale.id AS sale__id, \
@@ -44,5 +40,4 @@ require("./proof")(5, function (step, compiler, schema, placeholder, equal, deep
     equal(structure.joins[0].pivot, "products", "child pivot");
     equal(structure.joins[0].join.table, "sale", "child join table");
     deepEqual(structure.joins[0].join.fields, { "id": "item.saleId" }, "child join fields");
-  });
 });

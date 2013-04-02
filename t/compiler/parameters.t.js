@@ -1,17 +1,13 @@
 #!/usr/bin/env node
 
-require("./proof")(2, function (step, compiler, schema, placeholder, equal, deepEqual) {
-  var structure, expected, actual, length;
-
-  console.log(placeholder);
-
-  step(function () {
+require("./proof")(2, function (compiler, schema, placeholder, equal) {
+  var compilation =
     compiler.compile(" \
       SELECT * \
         FROM Manufacturer AS manufacturer \
        WHERE id = $id  \
-    ", schema, placeholder, step());
-  }, function (compilation) {
+    ", schema, placeholder);
+
     equal(compilation.structure.parameters[0]({ id: 1 }), 1, 'parameters');
     equal(compilation.structure.sql.trim().replace(/\s+/g, ' '),
           'SELECT manufacturer.id AS manufacturer__id, \
@@ -19,5 +15,4 @@ require("./proof")(2, function (step, compiler, schema, placeholder, equal, deep
              FROM Manufacturer AS manufacturer \
             WHERE id = ?'.trim().replace(/\s+/g, ' '),
             'sql');
-  });
 });

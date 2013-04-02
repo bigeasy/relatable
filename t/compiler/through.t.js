@@ -1,20 +1,15 @@
 #!/usr/bin/env node
 
-require("./proof")(2, function (step, equal, compiler, schema, placeholder) {
-  var structure, actual, expected, length;
-
-  step(function () {
+require("./proof")(2, function (equal, compiler, schema, placeholder) {
+  var structure, compilation =
     compiler.compile(" \
       SELECT products.* \
         FROM SaleItem AS item \
         JOIN Product AS products ON products.manufacturerId = item.manufacturerId \
                                 AND products.manufacturerCode = item.manufacturerCode \
         WHERE item.sale_id = ? \
-    ", schema, placeholder, step());
-  },
+    ", schema, placeholder);
 
-
-  function (compilation) {
     structure = compilation.structure;
     expected = " \
       SELECT products.id AS products__id, \
@@ -32,5 +27,4 @@ require("./proof")(2, function (step, equal, compiler, schema, placeholder) {
                       .replace(/\s+/g, ' ').substring(0, length);
     equal(actual, expected.substring(0, length), "test via join table sql");
     equal(structure.pivot, "products", "test via join table pivot");
-  });
 });

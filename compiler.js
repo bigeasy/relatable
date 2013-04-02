@@ -130,60 +130,35 @@ exports.insert = function(definition, object, type) {
   return operation;
 };
 
-exports.compile = function(sql, schema, placeholder, callback) {
-  if (arguments.length != 4) throw new Error();
-  var scan = scanner.query(sql), selects = [[]], count = 0;
-  scan.forEach(function (part) {
-    selects[0].push(part);
-    if (part.type == "subselect") count++;
-    if (part.type == "collection") count--;
-    if (!count && part.type == "rest") selects.unshift([]);
-  });
-
-  var queue = selects.pop(), root = [], depth = 0, subselect, done;
-  while (queue.length) {
-    if (queue[0].type == "subselect") {
-      root.push(queue.shift());
-      subselect = [], done = false;
-      while (!done && queue.length) {
-        if (queue[0].type == "subselect") {
-          depth++;
-          continue;
-        } else if (queue[0].type == "collection") {
-          if (depth) {
-            depth--;
-          } else {
-            done = true;
-          }
-        }
-        subselect.push(queue.shift());
-      }
-      selects.push(subselect);
-    } else {
-      root.push(queue.shift());
-    }
-  }
-
-  selects.push(root);
-  compileSelect([], selects.pop(), schema, placeholder, function(error, result) {
-    compileSelects([result.structure], selects, schema, placeholder, callback);
-  });
-};
-
-function compileSelects (path, selects, schema, placeholder, callback) {
-  if (selects.length == 1) {
-    callback(null, { structure: path[0] });
-  } else {
-    compileSelect(path, selects.pop(), schema, placeholder, function(error) {
-      if (error) callback(error);
-      else compileSelects(path, selects, schema, placeholder, callback);
-    });
-  }
+function subselect (scan) {
+  var subselect = [], depth = 0, part;
+  do {
+    subselect.push(part = scan.shift());
+    if (part.type == "subselect") depth++;
+    else if (part.type == "collection") depth--;
+  } while (depth != 0);
+  return subselect;
 }
 
-function compileSelect (path, scan, schema, placeholder, callback) {
-  var all = false, expansions = [], tables = [], parents = {}, selected = {},
+exports.compile = function(sql, schema, placeholder) {
+  return compile([], scanner.query(sql), schema, placeholder);
+}
+
+function subselects (scan, children) {
+  var parent = [];
+  while (scan.length) {
+    if (scan[0].type == "subselect") children.push(subselect(scan));
+    else parent.push(scan.shift());
+  }
+  return parent;
+}
+
+function compile (path, scan, schema, placeholder) {
+  var all = false,
+      children = [], expansions = [], tables = [],
+      parents = {}, selected = {},
       $, pivot, through, i, I, token, left, right;
+  scan = subselects(scan, children);
   for (i = 0, I = scan.length; i < I; i++) {
     token = scan[i];
     switch (token.type) {
@@ -291,31 +266,35 @@ function compileSelect (path, scan, schema, placeholder, callback) {
     from = scan.shift();
   }
   token = scan.shift();
-  if (path.length) {
-    if (scan[0].table == token.alias) {
-      join = scan[1], first = scan[0];
+  var index = 0;
+  while (path.length && scan[index].type == 'left') {
+    if (scan[index].table == token.alias) {
+      join = scan[index + 1], first = scan[index];
     } else {
-      join = scan[0], first = scan[1];
+      join = scan[index], first = scan[index + 1];
     }
     for (i = path.length - 1; i >= 0; --i) {
       if (path[i].pivot === join.table) {
-        path[i].joins.push(structure);
-        structure.join = {
-          table: path[i].pivot,
-          fields: {}
-        };
+        if (!index) {
+          path[i].joins.push(structure);
+          structure.join = {
+            table: path[i].pivot,
+            fields: {}
+          };
+        }
         if (through) {
           joined = "" + through.table + "." + through.column;
         } else {
           joined = first.column;
         }
         structure.join.fields[join.column] = joined;
-        sql.push(" FROM " + path[i].temporary + " AS " + path[i].pivot);
+        if (!index) sql.push(" FROM " + path[i].temporary + " AS " + path[i].pivot);
         from.value = "JOIN";
         break;
       }
     }
     join.value = "" + join.table + "." + join.table + "__" + join.column;
+    index += 2;
   }
   sql.push(from.before);
   sql.push(from.value);
@@ -352,5 +331,10 @@ function compileSelect (path, scan, schema, placeholder, callback) {
     parameters: parameters,
     joins: []
   });
-  callback(null, { structure: structure, scan: scan });
+  var compiled = { structure: structure, scan: scan };
+  children.forEach(function (child) {
+    child.shift();
+    compile([structure].concat(path), child, schema, placeholder);
+  });
+  return compiled;
 }
