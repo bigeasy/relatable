@@ -163,29 +163,15 @@ exports.compile = function(sql, schema, placeholder) {
     }
   }
 
-  var ret;
   selects.push(root);
-  compileSelect([], selects.pop(), schema, placeholder, function(error, result) {
-    ret = result;
-    compileSelects([result.structure], selects, schema, placeholder, function (error) {
-      if (error) throw error;
-    });
-  });
+  var ret = compileSelect([], selects.pop(), schema, placeholder);
+  while (selects.length != 1) {
+    compileSelect([ret.structure], selects.pop(), schema, placeholder);
+  }
   return ret;
 };
 
-function compileSelects (path, selects, schema, placeholder, callback) {
-  if (selects.length == 1) {
-    callback(null, { structure: path[0] });
-  } else {
-    compileSelect(path, selects.pop(), schema, placeholder, function(error) {
-      if (error) callback(error);
-      else compileSelects(path, selects, schema, placeholder, callback);
-    });
-  }
-}
-
-function compileSelect (path, scan, schema, placeholder, callback) {
+function compileSelect (path, scan, schema, placeholder) {
   var all = false, expansions = [], tables = [], parents = {}, selected = {},
       $, pivot, through, i, I, token, left, right;
   for (i = 0, I = scan.length; i < I; i++) {
@@ -360,5 +346,5 @@ function compileSelect (path, scan, schema, placeholder, callback) {
     parameters: parameters,
     joins: []
   });
-  callback(null, { structure: structure, scan: scan });
+  return { structure: structure, scan: scan };
 }
