@@ -130,8 +130,7 @@ exports.insert = function(definition, object, type) {
   return operation;
 };
 
-exports.compile = function(sql, schema, placeholder, callback) {
-  if (arguments.length != 4) throw new Error();
+exports.compile = function(sql, schema, placeholder) {
   var scan = scanner.query(sql), selects = [[]], count = 0;
   scan.forEach(function (part) {
     selects[0].push(part);
@@ -164,10 +163,15 @@ exports.compile = function(sql, schema, placeholder, callback) {
     }
   }
 
+  var ret;
   selects.push(root);
   compileSelect([], selects.pop(), schema, placeholder, function(error, result) {
-    compileSelects([result.structure], selects, schema, placeholder, callback);
+    ret = result;
+    compileSelects([result.structure], selects, schema, placeholder, function (error) {
+      if (error) throw error;
+    });
   });
+  return ret;
 };
 
 function compileSelects (path, selects, schema, placeholder, callback) {

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-require("./proof")(5, function (step, compiler, schema, placeholder, equal, deepEqual) {
-  step(function () {
+require("./proof")(5, function (compiler, schema, placeholder, equal, deepEqual) {
+  var compilation =
     compiler.compile(" \
       SELECT *, \
             (SELECT * \
@@ -9,8 +9,7 @@ require("./proof")(5, function (step, compiler, schema, placeholder, equal, deep
                                      AND product.manufacturer_code = item.manufacturer_code \
              )\
         FROM product \
-    ", schema, placeholder, step());
-  }, function (compilation) {
+    ", schema, placeholder);
     equal(compilation.structure.sql.trim().replace(/\s+/g, ' '), '\
            SELECT product.id AS product__id, \
                   product.manufacturerId AS product__manufacturerId, \
@@ -32,5 +31,4 @@ require("./proof")(5, function (step, compiler, schema, placeholder, equal, deep
                                  AND product.product__manufacturer_code = item.manufacturer_code \
          '.trim().replace(/\s+/g, ' '), 'sub query');
     equal(join.pivot, 'item', 'pivot');
-  });
 });

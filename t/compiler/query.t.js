@@ -3,11 +3,9 @@
 require("./proof")(6, function (step, compiler, schema, placeholder, equal, deepEqual) {
   var structure, expected, actual, length;
 
-  step(function () {
-    compiler.compile("SELECT * FROM Product", schema, placeholder, step());
-  },
+  var compilation =
+    compiler.compile("SELECT * FROM Product", schema, placeholder);
 
-  function (compilation) {
     structure = compilation.structure;
     expected = " \
       SELECT Product.id AS Product__id, \
@@ -22,14 +20,13 @@ require("./proof")(6, function (step, compiler, schema, placeholder, equal, deep
     equal(structure.pivot, "Product", "test correct query pivot");
     deepEqual(structure.parents, {}, "test correct query no parents");
 
+  compilation =
     compiler.compile(" \
       SELECT * \
         FROM Product \
         JOIN Manufacturer ON Product.manufacturerId = Manufacturer.id \
-    ", schema, placeholder, step());
-  },
+    ", schema, placeholder);
 
-  function (compilation) {
     structure = compilation.structure;
     expected = " \
       SELECT Product.id AS Product__id, \
@@ -47,5 +44,4 @@ require("./proof")(6, function (step, compiler, schema, placeholder, equal, deep
     equal(actual, expected.substring(0, length), "test correct join sql");
     equal(structure.pivot, "Product", "test correct join pivot");
     deepEqual(structure.parents, { "Manufacturer": "Product" }, "test correct join parents");
-  });
 });

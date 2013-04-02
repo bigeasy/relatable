@@ -28,7 +28,7 @@ function Selection (relatable, schema, connection, sql, parameters, close) {
 Selection.prototype.execute = cadence(function (step) {
   step(function () {
 
-    compiler.compile(this.sql, this.schema, this.connection._placeholder, step());
+    return compiler.compile(this.sql, this.schema, this.connection._placeholder);
 
   }, function (compilation) {
 
