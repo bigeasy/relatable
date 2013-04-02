@@ -14,14 +14,13 @@ function extend (to, from) {
 
 Selection.name = 'Selection';
 
-function Selection(relatable, schema, connection, sql, parameters, close, callback) {
+function Selection (relatable, schema, connection, sql, parameters, close) {
   this.relatable = relatable;
   this.schema = schema;
   this.connection = connection;
   this.sql = sql;
   this.parameters = parameters;
   this.close = close;
-  this.callback = callback;
   this.cleanup = [];
   this.completed = {};
 }
@@ -43,34 +42,33 @@ Selection.prototype.execute = cadence(function (step) {
         return parameter(parameters)
       });
     }
-    this.select([structure]);
+    this.select([structure], step());
 
   });
 });
 
-Selection.prototype.complete = function () {
-  var selection = this;
-  if (selection.cleanup.length) {
-    selection.connection.sql(selection.cleanup.shift(), [], function (error, results) {
-      if (error) selection.callback(error);
-      else selection.complete();
-    });
-  } else {
-    if (selection.close) {
-      selection.connection.close("ROLLBACK", function () {});
+Selection.prototype.complete = cadence(function (step) {
+  step(function () {
+    if (this.cleanup.length) {
+      this.connection.sql(this.cleanup.shift(), [], step());
     }
-    selection.callback(null, selection.results);
-  }
-};
+  }, function () {
+    if (this.close) {
+      this.connection.close("ROLLBACK", step());
+    }
+  }, function () {
+    return this.results;
+  });
+});
 
-Selection.prototype.join = function (structures, expanded) {
+Selection.prototype.join = function (structures, expanded, callback) {
   var selection = this, structure = structures.shift();
   selection.completed[structure.pivot] = expanded;
   structures.push.apply(structures, structure.joins);
   if (structures.length) {
-    return selection.select(structures);
+    return selection.select(structures, callback);
   } else {
-    return selection.complete();
+    return selection.complete(callback);
   }
 };
 
@@ -82,84 +80,81 @@ Selection.prototype._get = function (record, key) {
   return record != null ? record[path.shift()] : void 0;
 };
 
-Selection.prototype.gather = function (sql, structures, parameters) {
-  var selection = this;
-  selection.connection.sql(sql, parameters, function (error, results) {
-    var pivot, expanded, tree, join, joins,
+Selection.prototype.gather = cadence(function (step, sql, structures, parameters) {
+  step(function () {
+    this.connection.sql(sql, parameters, step());
+  }, function (results) {
+    var selection = this, pivot, expanded, tree, join, joins,
         fields, map, keys, current, parent, i, I;
-    if (error) {
-      selection.callback(error);
+    if (pivot = structures[0].pivot) {
+      expanded = [], joins = structures[0].joins || [];
+      (results.rows || results).forEach(function (result) {
+        tree = selection.treeify(result, pivot);
+        joins.forEach(function (join) {
+          tree[selection.relatable._toJavaScript(join.pivot)] = [];
+        });
+        expanded.push(tree);
+      });
     } else {
-      if (pivot = structures[0].pivot) {
-        expanded = [], joins = structures[0].joins || [];
-        (results.rows || results).forEach(function (result) {
-          tree = selection.treeify(result, pivot);
-          joins.forEach(function (join) {
-            tree[selection.relatable._toJavaScript(join.pivot)] = [];
-          });
-          expanded.push(tree);
-        });
-      } else {
-        expanded = results.rows || results;
-      }
-      if (pivot && structures[0].join) {
-        join = structures[0].join, fields = join.fields, map = {}, keys = Object.keys(fields);
-        selection.completed[join.table].forEach(function (record) {
-          current = map;
-          for (i = 0, I = keys.length - 1; i < I; i++) {
-            current = current[record[keys[i]]] || (current[record[keys[i]]] = {});
-          }
-          current[record[selection.relatable._toJavaScript(keys[keys.length - 1])]] = record;
-        });
-        expanded.forEach(function (record) {
-          current = map;
-          for (i = 0, I = keys.length - 1; i < I; i++) {
-            current = current[record[fields[keys[i]]]] || (current[record[fields[keys[i]]]] = {});
-          }
-          parent = current[selection._get(record, selection.relatable._toJavaScript(fields[keys[keys.length - 1]]))];
-          parent[selection.relatable._toJavaScript(pivot)].push(record);
-        });
-      } else {
-        selection.results = expanded;
-      }
-      selection.join(structures, expanded);
+      expanded = results.rows || results;
     }
+    if (pivot && structures[0].join) {
+      join = structures[0].join, fields = join.fields, map = {}, keys = Object.keys(fields);
+      selection.completed[join.table].forEach(function (record) {
+        current = map;
+        for (i = 0, I = keys.length - 1; i < I; i++) {
+          current = current[record[keys[i]]] || (current[record[keys[i]]] = {});
+        }
+        current[record[selection.relatable._toJavaScript(keys[keys.length - 1])]] = record;
+      });
+      expanded.forEach(function (record) {
+        current = map;
+        for (i = 0, I = keys.length - 1; i < I; i++) {
+          current = current[record[fields[keys[i]]]] || (current[record[fields[keys[i]]]] = {});
+        }
+        parent = current[selection._get(record, selection.relatable._toJavaScript(fields[keys[keys.length - 1]]))];
+        parent[selection.relatable._toJavaScript(pivot)].push(record);
+      });
+    } else {
+      selection.results = expanded;
+    }
+    selection.join(structures, expanded, step());
   });
-};
+});
 
-Selection.prototype.temporary = function (structures, prepare) {
-  var selection = this, sql;
-  if (prepare.length) {
-    selection.connection.sql.apply(selection.connection,
-      prepare.shift().concat(function (error, results) {
-      if (error) selection.callback(error);
-      else selection.temporary(structures, prepare);
-    }));
-  } else {
-    sql = "\
-      SELECT *\n\
-      FROM " + structures[0].temporary + "\n\
-     ORDER\n\
-        BY " + structures[0].temporary + "_row_number";
-    selection.gather(sql, structures, []);
-  }
-};
+Selection.prototype.temporary = cadence(function (step, structures, prepare) {
+  var next;
+  step(next = function () {
 
-Selection.prototype.select = function (structures) {
-  var selection = this, parameters, prepare;
-  parameters = selection.parameters[structures[0].pivot] || [];
+    var parameters = prepare.shift().concat(step());
+    this.connection.sql.apply(this.connection, parameters);
+
+  }, function () {
+
+    if (prepare.length) step(next)();
+    else this.gather('\
+        SELECT * \
+        FROM ' + structures[0].temporary + ' \
+       ORDER \
+          BY ' + structures[0].temporary + '_row_number \
+      ', structures, [], step());
+
+  });
+});
+
+Selection.prototype.select = function (structures, callback) {
+  var prepare, parameters = this.parameters[structures[0].pivot] || [];
   if (structures[0].joins.length) {
-    prepare = selection.relatable._engine.temporary(structures[0], parameters);
-    selection.cleanup.push("DROP TABLE " + structures[0].temporary);
-    selection.temporary(structures, prepare);
+    prepare = this.relatable._engine.temporary(structures[0], parameters);
+    this.cleanup.push("DROP TABLE " + structures[0].temporary);
+    this.temporary(structures, prepare, callback);
   } else {
-    selection.gather(structures[0].sql, structures, parameters);
+    this.gather(structures[0].sql, structures, parameters, callback);
   }
 };
 
 Selection.prototype.treeify = function (record, get) {
   var selection = this, i, I, key, part, parts, tree = {}, value, branch;
-  tree = {};
   for (key in record) {
     value = record[key];
     parts = key.split(/__/);
@@ -369,7 +364,7 @@ Relatable.prototype.select = function () {
 };
 
 Relatable.prototype._select = function (schema, connection, sql, parameters, close, callback) {
-  new Selection(this, schema, connection, sql, parameters, close, callback).execute();
+  new Selection(this, schema, connection, sql, parameters, close).execute(callback);
 };
 
 Relatable.prototype.mutate = function () {
