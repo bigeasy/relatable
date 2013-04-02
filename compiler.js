@@ -130,50 +130,35 @@ exports.insert = function(definition, object, type) {
   return operation;
 };
 
+function subselect (scan) {
+  var subselect = [], depth = 0, part;
+  do {
+    subselect.push(part = scan.shift());
+    if (part.type == "subselect") depth++;
+    else if (part.type == "collection") depth--;
+  } while (depth != 0);
+  return subselect;
+}
+
 exports.compile = function(sql, schema, placeholder) {
-  var scan = scanner.query(sql), selects = [[]], count = 0;
-  scan.forEach(function (part) {
-    selects[0].push(part);
-    if (part.type == "subselect") count++;
-    if (part.type == "collection") count--;
-    if (!count && part.type == "rest") selects.unshift([]);
-  });
+  return compile([], scanner.query(sql), schema, placeholder);
+}
 
-  var queue = selects.pop(), root = [], depth = 0, subselect, done;
-  while (queue.length) {
-    if (queue[0].type == "subselect") {
-      root.push(queue.shift());
-      subselect = [], done = false;
-      while (!done && queue.length) {
-        if (queue[0].type == "subselect") {
-          depth++;
-          continue;
-        } else if (queue[0].type == "collection") {
-          if (depth) {
-            depth--;
-          } else {
-            done = true;
-          }
-        }
-        subselect.push(queue.shift());
-      }
-      selects.push(subselect);
-    } else {
-      root.push(queue.shift());
-    }
+function subselects (scan, children) {
+  var parent = [];
+  while (scan.length) {
+    if (scan[0].type == "subselect") children.push(subselect(scan));
+    else parent.push(scan.shift());
   }
+  return parent;
+}
 
-  selects.push(root);
-  var ret = compileSelect([], selects.pop(), schema, placeholder);
-  while (selects.length != 1) {
-    compileSelect([ret.structure], selects.pop(), schema, placeholder);
-  }
-  return ret;
-};
-
-function compileSelect (path, scan, schema, placeholder) {
-  var all = false, expansions = [], tables = [], parents = {}, selected = {},
+function compile (path, scan, schema, placeholder) {
+  var all = false,
+      children = [], expansions = [], tables = [],
+      parents = {}, selected = {},
       $, pivot, through, i, I, token, left, right;
+  scan = subselects(scan, children);
   for (i = 0, I = scan.length; i < I; i++) {
     token = scan[i];
     switch (token.type) {
@@ -346,5 +331,10 @@ function compileSelect (path, scan, schema, placeholder) {
     parameters: parameters,
     joins: []
   });
-  return { structure: structure, scan: scan };
+  var compiled = { structure: structure, scan: scan };
+  children.forEach(function (child) {
+    child.shift();
+    compile([structure].concat(path), child, schema, placeholder);
+  });
+  return compiled;
 }
