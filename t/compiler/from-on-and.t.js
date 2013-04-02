@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-require("./proof")(4, function (step, compiler, schema, placeholder, equal, deepEqual) {
+require("./proof")(5, function (step, compiler, schema, placeholder, equal, deepEqual) {
   step(function () {
     compiler.compile(" \
       SELECT *, \
