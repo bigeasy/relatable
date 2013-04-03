@@ -400,7 +400,3 @@ Relatable.prototype.sql = cadence(function (step) {
     });
   });
 });
-
-Relatable.prototype.fetch = function (key, callback) {
-  return callback(false);
-};
