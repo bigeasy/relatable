@@ -378,34 +378,28 @@ Relatable.prototype.mutate = function () {
   return new Mutator(this);
 };
 
-Relatable.prototype.sql = function () {
-  var relatable = this,
-      parameters = __slice.call(arguments),
-      sql = parameters.shift(),
-      callback = parameters.pop();
-  if (parameters.length && Array.isArray(parameters[0])) {
-    parameters = parameters[0];
-  }
-  relatable._engine.connect(function (error, schema, connection) {
-    if (error) {
-      callback(error);
-    } else {
-      connection.sql(sql, parameters, function (error, results) {
-        if (error) {
-          callback(error);
-        } else {
-          connection.close("COMMIT", function (error) {
-            if (error) {
-              callback(error);
-            } else {
-              callback(null, results);
-            }
-          });
-        }
-      });
+Relatable.prototype.sql = cadence(function (step) {
+  var parameters = __slice.call(arguments, 1), sql = parameters.shift();
+  step(function () {
+    if (parameters.length && Array.isArray(parameters[0])) {
+      parameters = parameters[0];
     }
+    this._engine.connect(step());
+  }, function (schema, connection) {
+    step(function () {
+      connection.sql(sql, parameters, step());
+    }, function (results) {
+      step(function () {
+        connection.close("COMMIT", step());
+      }, function () {
+        return results;
+      });
+      //step()(null, results);
+      //connection.close("COMMIT", step());
+      // return results; TODO MAKE THIS HAPPEN
+    });
   });
-};
+});
 
 Relatable.prototype.fetch = function (key, callback) {
   return callback(false);
