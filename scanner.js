@@ -82,6 +82,26 @@ function Scanner () {
   function parameter () {
     token({ type: 'stuff' });
     before.push(bump());
+    if (rest[0] == '{') evaluated();
+    else named();
+  }
+
+  function evaluated () {
+    var depth = 1, source = '';
+    before.push(bump());
+    while (rest[0] != '}' && ($ = /^(?:[^'"{}]*|'(?:[^\\']|\\.)*'|"(?:[^\\"]|\\.)*")*/.exec(rest))) {
+      value.push($[0]);
+      source += $[0];
+      rest = rest.substring($[0].length);
+      if (rest[0] == '}') {
+        break;
+      }
+    }
+    bump();
+    token({ type: 'evaluated' });
+  }
+
+  function named () {
     var $ = /^(\w[\w\d]+)([^\u0000]*)$/.exec(rest);
     value.push($[1]);
     rest = $[2];
