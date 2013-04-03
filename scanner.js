@@ -80,15 +80,14 @@ function Scanner () {
   }
 
   function parameter () {
-    token({ type: 'stuff' });
-    before.push(bump());
     if (rest[0] == '{') evaluated();
     else named();
   }
 
   function evaluated () {
-    var depth = 1, source = '';
+    token({ type: 'stuff' });
     before.push(bump());
+    var depth = 1, source = '';
     while (rest[0] != '}' && ($ = /^(?:[^'"{}]*|'(?:[^\\']|\\.)*'|"(?:[^\\"]|\\.)*")*/.exec(rest))) {
       value.push($[0]);
       source += $[0];
@@ -102,6 +101,8 @@ function Scanner () {
   }
 
   function named () {
+    token({ type: 'stuff' });
+    before.push(bump());
     var $ = /^(\w[\w\d]+)([^\u0000]*)$/.exec(rest);
     value.push($[1]);
     rest = $[2];
@@ -380,7 +381,7 @@ function Scanner () {
         ^
         (
           (?:
-            [^)('sS$]       // No parens, quotes, esses, or dollar signs.
+            [^)('sS${]       // No parens, quotes, esses, dollars, or curlies.
             |
             S(?!ELECT)      // s, but not select
             |
@@ -408,15 +409,15 @@ function Scanner () {
         } else if (rest[0] == ")") {
           if (subselect) return;
           before.push(bump());
-        } else if (rest[0] == "$") {
-          parameter();
         } else {
           token({ type: "stuff" });
           _query(rest, true);
           break;
         }
-      } else if (rest[0] == '$') {
-        parameter();
+      } else if (rest[0] == '{') {
+        evaluated();
+      } else if (rest[0] == "$") {
+        named();
       } else {
         token({ type: "stuff" });
         break;
