@@ -37,7 +37,7 @@ Mutator.prototype.select = function (mutation, operation) {
   };
   relatable._select(mutation.schema,
                     mutation.connection,
-                    operation.sql,
+                    operation.strings,
                     operation.parameters,
                     false,
                     callback);

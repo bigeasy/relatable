@@ -1,4 +1,9 @@
-var compiler = require("./compiler"), __slice = [].slice, cadence = require('cadence');
+var fs = require('fs'),
+    path = require('path'),
+    ok = require('assert').ok,
+    __slice = [].slice,
+    compiler = require("./compiler"),
+    cadence = require('cadence');
 
 function die () {
   console.log.apply(console, __slice.call(arguments, 0));
@@ -14,11 +19,11 @@ function extend (to, from) {
 
 Selection.name = 'Selection';
 
-function Selection (relatable, schema, connection, sql, parameters, close) {
+function Selection (relatable, schema, connection, strings, parameters, close) {
   this.relatable = relatable;
   this.schema = schema;
   this.connection = connection;
-  this.sql = sql;
+  this.strings = strings;
   this.parameters = parameters;
   this.close = close;
   this.cleanup = [];
@@ -28,20 +33,22 @@ function Selection (relatable, schema, connection, sql, parameters, close) {
 Selection.prototype.execute = cadence(function (step) {
   step(function () {
 
-    return compiler.compile(this.sql, this.schema, this.connection._placeholder);
-
-  }, function (compilation) {
-
-    var parameters = this.parameters, structure = compilation.structure;
-    if (Array.isArray(parameters)) {
-      this.parameters = {};
-      this.parameters[structure.pivot] = parameters;
-    } else if (typeof parameters == "object") {
-      this.parameters = {}
-      this.parameters[structure.pivot] = structure.parameters.map(function (parameter) {
-        return parameter(parameters)
-      });
+    if (this.strings.length == 1 && /^\s*select\s/i.test(this.strings[0])) {
+      return this.strings[0];
+    } else {
+      fs.readFile(path.join.apply(path, this.strings), 'utf8', step());
     }
+
+  }, function (sql) {
+
+    var compilation = compiler.compile(sql, this.schema, this.connection._placeholder),
+        parameters = this.parameters, structure = compilation.structure;
+
+    this.parameters = {}
+    this.parameters[structure.pivot] = structure.parameters.map(function (parameter) {
+      return parameter(parameters)
+    });
+
     this.select([structure], step());
 
   });
@@ -238,13 +245,14 @@ Mutator.prototype.sql = function (sql, parameters) {
 };
 
 Mutator.prototype.select = function () {
-  var mutator = this, sql, parameters = __slice.call(arguments), sql = parameters.shift();
-  if (parameters.length === 1 && Array.isArray(parameters[0])) {
-    parameters = parameters[0];
+  var mutator = this, sql, parameters = __slice.call(arguments), strings = [];
+  while (typeof parameters[0] == "string") {
+    strings.push(parameters.shift());
   }
+  parameters = parameters[0] || {};
   return mutator.operations.push({
     type: "select",
-    sql: sql,
+    strings: strings,
     parameters: parameters
   });
 };
@@ -349,23 +357,22 @@ Relatable.prototype._toSQL = function (field) {
   }
 };
 
-Relatable.prototype.select = function () {
-  var relatable = this,
-      parameters = __slice.call(arguments),
-      sql = parameters.shift(),
-      callback = parameters.pop();
-  if (parameters.length === 1 && typeof parameters[0] === "object") {
-    parameters = parameters[0];
-  }
-  relatable._engine.connect(function (error, schema, connection) {
-    if (error) callback(error);
-    else relatable._select(schema, connection, sql, parameters, true, callback);
+Relatable.prototype.select = cadence(function (step) {
+  var parameters = __slice.call(arguments, 1), strings = [];
+  step(function () {
+    while (typeof parameters[0] == "string") {
+      strings.push(parameters.shift());
+    }
+    parameters = parameters[0] || {};
+    this._engine.connect(step());
+  }, function (schema, connection) {
+    this._select(schema, connection, strings, parameters, true, step());
   });
-};
+});
 
-Relatable.prototype._select = function (schema, connection, sql, parameters, close, callback) {
-  new Selection(this, schema, connection, sql, parameters, close).execute(callback);
-};
+Relatable.prototype._select = function (schema, connection, strings, parameters, close, callback) {
+  new Selection(this, schema, connection, strings, parameters, close).execute(callback);
+}
 
 Relatable.prototype.mutate = function () {
   return new Mutator(this);
