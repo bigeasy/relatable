@@ -296,19 +296,6 @@ Mutator.prototype["delete"] = function (pattern, object, callback) {
   mutator._enqueue(compiler.delete(pattern, object), callback);
 }
 
-Mutator.prototype.execute = function (callback) {
-  var mutator = this;
-  mutator.relatable._engine.connect(function (error, schema, connection) {
-    var mutation;
-    if (error) {
-      callback(error);
-    } else {
-      mutation = new Mutation(mutator, schema, connection, mutator.operations, callback);
-      mutation.mutate();
-    }
-  });
-};
-
 exports.Relatable = Relatable;
 
 Relatable.name = 'Relatable';
