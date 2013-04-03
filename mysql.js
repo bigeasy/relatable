@@ -1,4 +1,7 @@
-var Mutator = require("./engine").Mutator, Client = require("mysql").Client, __slice = [].slice;
+var Mutator = require("./engine").Mutator,
+    Client = require("mysql").Client,
+    __slice = [].slice,
+    cadence = require("cadence");
 
 function die () {
   console.log.apply(console, __slice.call(arguments, 0));
@@ -6,24 +9,6 @@ function die () {
 }
 
 function say () { console.log.apply(console, __slice.call(arguments, 0)) }
-
-function validator (callback) {
-  return function (forward) { return check(callback, forward) }
-}
-
-function check (callback, forward) {
-  return function (error) {
-    if (error) {
-      callback(error);
-    } else {
-      try {
-        forward.apply(null, __slice.call(arguments, 1));
-      } catch (error) {
-        callback(error);
-      }
-    }
-  }
-}
 
 exports.Engine = Engine;
 
@@ -34,76 +19,65 @@ function Engine(_configuration) {
   this._dual = true;
 }
 
-Engine.prototype.connect = function(callback) {
-  var engine = this;
-  engine._describe(check(callback, function (schema) {
-    engine._connect(function(error, connection) {
-      callback(error, schema, connection);
+Engine.prototype.connect = cadence(function(step) {
+  step(function () {
+    this._describe(step());
+  }, function (schema) {
+    step(null, schema, this._connect());
+  });
+});
+
+Engine.prototype._describe = cadence(function (step) {
+  if (this._schema) step(null, this._schema);
+  else {
+    var schema = (this._schema = { public: {} });
+    var connection = this._connect();
+    step(function () {
+      connection.sql("\
+      SELECT columns.table_name, columns.column_name\n\
+        FROM information_schema.tables AS tables\n\
+        JOIN information_schema.columns AS columns\n\
+          USING (table_catalog, table_schema, table_name)\n\
+       WHERE table_type = 'BASE TABLE'\n\
+         AND tables.table_schema = ?\n\
+        ", [ this._configuration.name ], step());
+    }, function (results) {
+      results.forEach(function (column) {
+        var table = column.table_name.toLowerCase();
+        if (!schema.public[table]) {
+          schema.public[table] = { columns: [], key: [] };
+        }
+        table = schema.public[table];
+        table.columns.push(column.column_name);
+      });
+      connection.sql("\
+        SELECT kcu.table_schema, kcu.table_name, kcu.column_name\n\
+          FROM information_schema.table_constraints as tc\n\
+          JOIN information_schema.key_column_usage AS kcu\n\
+            USING (constraint_catalog, constraint_schema, constraint_name,\n\
+                   table_name, table_schema)\n\
+         WHERE constraint_type = 'PRIMARY KEY'\n\
+           AND constraint_schema = ?\n\
+        ", [ this._configuration.name ], step());
+    }, function (results) {
+      results.forEach(function (column) {
+        schema.public[column.table_name.toLowerCase()].key.push(column.column_name.toLowerCase());
+      });
+      connection.close("ROLLBACK", step());
+    }, function () {
+      return schema;
     });
-  }));
-}
-
-Engine.prototype._describe = function (callback) {
-  var engine = this, schema, connection, okay = validator(callback);
-  if (engine._schema) {
-    callback(null, engine._schema);
-  } else {
-    schema = engine._schema = { public: {} };
-    engine._connect(okay(connected));
   }
+});
 
-  function connected ($connection) {
-    connection = $connection;
-    connection.sql("\
-    SELECT columns.table_name, columns.column_name\n\
-      FROM information_schema.tables AS tables\n\
-      JOIN information_schema.columns AS columns\n\
-        USING (table_catalog, table_schema, table_name)\n\
-     WHERE table_type = 'BASE TABLE'\n\
-       AND tables.table_schema = ?\n\
-      ", [ engine._configuration.name ], okay(columns));
-  }
-
-  function columns (results) {
-    results.forEach(function (column) {
-      var table = column.table_name.toLowerCase();
-      if (!schema.public[table]) {
-        schema.public[table] = { columns: [], key: [] };
-      }
-      table = schema.public[table];
-      table.columns.push(column.column_name);
-    });
-    connection.sql("\
-      SELECT kcu.table_schema, kcu.table_name, kcu.column_name\n\
-        FROM information_schema.table_constraints as tc\n\
-        JOIN information_schema.key_column_usage AS kcu\n\
-          USING (constraint_catalog, constraint_schema, constraint_name,\n\
-                 table_name, table_schema)\n\
-       WHERE constraint_type = 'PRIMARY KEY'\n\
-         AND constraint_schema = ?\n\
-      ", [ engine._configuration.name ], okay(keys));
-  }
-
-  function keys (results) {
-    results.forEach(function (column) {
-      schema.public[column.table_name.toLowerCase()].key.push(column.column_name.toLowerCase());
-    });
-    connection.close("ROLLBACK", okay(close));
-  }
-
-  function close () {
-    callback(null, schema);
-  }
-}
-
-Engine.prototype._connect = function(callback) {
+Engine.prototype._connect = function() {
   var engine = this, client;
   client = new Client();
   client.host = engine._configuration.hostname;
   client.user = engine._configuration.user;
   client.password = engine._configuration.password;
   client.database = engine._configuration.name;
-  return callback(null, new Connection(client));
+  return new Connection(client);
 }
 
 Engine.prototype.temporary = function(structure, parameters) {
