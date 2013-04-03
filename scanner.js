@@ -97,7 +97,7 @@ function Scanner () {
       }
     }
     bump();
-    token({ type: 'evaluated' });
+    token({ type: 'evaluation' });
   }
 
   function named () {

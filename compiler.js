@@ -318,6 +318,10 @@ function compile (path, scan, schema, placeholder) {
         sql.push(token.before);
         sql.push(token.value || "");
         break;
+      case "evaluation":
+        parameters.push(new Function("$", 'return ' + token.value));
+        sql.push(placeholder(index++));
+        break;
       case "parameter":
         parameters.push(function ($) { return $[token.value] });
         sql.push(placeholder(index++));

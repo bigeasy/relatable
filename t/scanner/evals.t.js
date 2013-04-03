@@ -7,7 +7,7 @@ require("./proof")(2, function (scanner, deepEqual) {
       { type: 'from', before: ' ', value: 'FROM' },
       { value: 'a', alias: 'a', name: 'a', type: 'table', before: ' ' },
       { type: 'stuff', before: ' WHERE a = ', value: '' },
-      { type: 'evaluated', before: '{', value: ' $.parameter ' },
+      { type: 'evaluation', before: '{', value: ' $.parameter ' },
       { type: 'stuff', before: '', value: '' },
       { type: 'rest', before: '', value: '' } ]
   , 'single parameter');
@@ -17,9 +17,9 @@ require("./proof")(2, function (scanner, deepEqual) {
       { type: 'from', before: ' ', value: 'FROM' },
       { value: 'a', alias: 'a', name: 'a', type: 'table', before: ' ' },
       { type: 'stuff', before: ' WHERE a = ', value: '' },
-      { type: 'evaluated', before: '{', value: ' $.parameter || 0 ' },
+      { type: 'evaluation', before: '{', value: ' $.parameter || 0 ' },
       { type: 'stuff', before: ' AND b = ', value: '' },
-      { type: 'evaluated', before: '{', value: ' $.other - 1 ' },
+      { type: 'evaluation', before: '{', value: ' $.other - 1 ' },
       { type: 'stuff', before: '', value: '' },
       { type: 'rest', before: '', value: '' } ]
   , 'double parameters');
