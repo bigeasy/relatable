@@ -41,15 +41,8 @@ Selection.prototype.execute = cadence(function (step) {
 
   }, function (sql) {
 
-    var compilation = compiler.compile(sql, this.schema, this.connection._placeholder),
-        parameters = this.parameters, structure = compilation.structure;
-
-    this.parameters = {}
-    this.parameters[structure.pivot] = structure.parameters.map(function (parameter) {
-      return parameter(parameters)
-    });
-
-    this.select([structure], step());
+    var compilation = compiler.compile(sql, this.schema, this.connection._placeholder);
+    this.select([compilation.structure], step());
 
   });
 });
@@ -132,7 +125,6 @@ Selection.prototype.gather = cadence(function (step, sql, structures, parameters
 Selection.prototype.temporary = cadence(function (step, structures, prepare) {
   var next;
   step(next = function () {
-
     var parameters = prepare.shift().concat(step());
     this.connection.sql.apply(this.connection, parameters);
 
@@ -150,7 +142,10 @@ Selection.prototype.temporary = cadence(function (step, structures, prepare) {
 });
 
 Selection.prototype.select = function (structures, callback) {
-  var prepare, parameters = this.parameters[structures[0].pivot] || [];
+  var parameters = this.parameters;
+  parameters = structures[0].parameters.map(function (parameter) {
+    return parameter(parameters)
+  });
   if (structures[0].joins.length) {
     prepare = this.relatable._engine.temporary(structures[0], parameters);
     this.cleanup.push("DROP TABLE " + structures[0].temporary);
