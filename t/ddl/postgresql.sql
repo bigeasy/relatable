@@ -48,8 +48,6 @@ INSERT INTO Manufacturer(name) VALUES('Acme')
 \g
 INSERT INTO Product(name, manufacturer_id, manufacturer_code) VALUES('Heavy Anvil', 1, 'A')
 \g
-INSERT INTO Product(name, manufacturer_id, manufacturer_code) VALUES('Tornado Seeds', 1, 'B')
-\g
 INSERT INTO Customer(first_name, last_name) VALUES('Wile E.', 'Coyote')
 \g
 INSERT INTO Sale(customer_id) VALUES(1)
