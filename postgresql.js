@@ -118,15 +118,17 @@ Connection.prototype.sql = function(query, parameters, callback) {
   return this._client.query(query, parameters, callback);
 };
 
-Connection.prototype.close = function(terminator, callback) {
-  var connection = this;
-  connection._client.once("drain", function() {
-    callback();
+Connection.prototype.close = cadence(function(step, terminator) {
+  step(function () {
+    this._client.query(terminator, [], step());
+  }, function () {
+    this._client.end();
   });
-  connection._client.query(terminator, [], function() {
-    connection._client.end();
-  });
-};
+});
+
+Connection.prototype.mutate = function (callback) {
+  this.sql('BEGIN TRANSACTION', callback);
+}
 
 Connection.prototype._returning = function(relatable, sql, schema) {
   return sql + ("RETURNING " + (schema.key.map(function(k) {

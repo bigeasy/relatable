@@ -180,20 +180,35 @@ function Mutator(relatable, schema, connection) {
   this.results = [];
 }
 
-Mutator.prototype._connect = function () {
-  var mutator = this;
-  mutator.connected = true;
-  mutator.relatable._engine.connect(function (error, schema, connection) {
-    mutator.schema = schema;
-    mutator.connection = connection;
-    mutator._dequeue();
+Mutator.prototype._connect = cadence(function (step) {
+  step(function () {
+    this.connected = true;
+    this.relatable._engine.connect(step());
+  }, function (schema, connection) {
+    this.schema = schema;
+    this.connection = connection;
+    step(function () {
+      connection.mutate(step());
+    }, function () {
+      this._dequeue();
+    });
   });
-}
+});
 
 Mutator.prototype._dequeue = function () {
   var mutator = this;
-  if (!mutator.connected) {
-    mutator._connect();
+  if (mutator.error) {
+    while (mutator.queue.length) {
+      var operation = mutator.queue.shift();
+      if (operation.callback) operation.callback(mutator.error);
+    }
+  } else if (!mutator.connected) {
+    mutator._connect(function (error) {
+      if (error) {
+        mutator.error = error;
+        mutator._dequeue();
+      }
+    });
   } else if (mutator.queue.length) {
     var operation = mutator.queue[0];
     switch (operation.type) {
@@ -205,6 +220,11 @@ Mutator.prototype._dequeue = function () {
       });
       break;
     case "rollback":
+      mutator.connection.close("ROLLBACK", function (error) {
+        if (error) mutator.error = error;
+        if (operation.callback) operation.callback(error, mutator.results);
+        delete mutator.connected;
+      });
       break;
     default:
       mutator.connection[operation.type](mutator, operation, function (error, result) {
@@ -224,7 +244,9 @@ Mutator.prototype.commit = function (callback) {
   mutator._enqueue({ type: "commit" }, callback);
 }
 
-Mutator.prototype.rollback = function () {
+Mutator.prototype.rollback = function (callback) {
+  var mutator = this;
+  mutator._enqueue({ type: "rollback" }, callback);
 }
 
 Mutator.prototype.sql = function (sql, parameters) {

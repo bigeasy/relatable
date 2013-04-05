@@ -88,7 +88,7 @@ Engine.prototype.temporary = function(structure, parameters) {
     SELECT @position := @position + 1 AS " + structure.temporary + "_row_number,\n\
            " + structure.temporary + "_subselect.*\n\
       FROM (\n    " + structure.sql + "\n  ) AS " + structure.temporary + "_subselect";
-  return [[set, []], [sql, parameters]];
+  eturn [[set, []], [sql, parameters]];
 };
 
 Connection.name = 'Connection';
@@ -109,11 +109,17 @@ Connection.prototype.sql = function(query, parameters, callback) {
   }
 };
 
-Connection.prototype.close = function(terminator, callback) {
-  var connection = this;
-  connection._client.destroy();
-  callback();
-};
+Connection.prototype.close = cadence(function(step, terminator) {
+  step(function () {
+    this._client.query(terminator, step());
+  }, function () {
+    this._client.end(step());
+  });
+});
+
+Connection.prototype.mutate = function (callback) {
+  this._client.query("BEGIN", callback);
+}
 
 Connection.prototype._returning = function(relatable, sql) {
   return sql;
