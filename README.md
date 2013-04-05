@@ -11,6 +11,19 @@ Changes for each release.
 
 ### Version 0.0.3
 
+ * Add `.gitignore`. #51.
+ * Implement commit and rollback. #35. #34.
+ * Evaluated parameters. #43.
+ * Parameters in sub-selects. #48.
+ * Source SQL from file. #50. #47.
+ * Add Cadence as a dependency.
+ * Nested sub-selects. #49.
+ * Honor `AND` in sub-select. #46.
+ * Implement named parameters indicated by `$`. #42.
+ * Implement sub-select in SELECT clause. #32.
+ * Tidy.
+ * Add license, contribution guide and design diary.
+ * Fix `insertIf`. #33.
  * Remove `lib` directory. #29.
  * Move Travis CI configuration to `t` directory. #31.
  * Move `ddl` to `t` directory. #30.
