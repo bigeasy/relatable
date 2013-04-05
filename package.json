@@ -1,7 +1,7 @@
 {   "name":             "relatable"
 ,   "description":
       "A lightweight JSON to relational mapping library that loves SQL and the relational data model."
-,   "version":          "0.0.2"
+,   "version":          "0.0.3"
 ,   "author":           "Alan Gutierrez <alan@prettyrobots.com>"
 ,   "repository":
     { "type": "git"

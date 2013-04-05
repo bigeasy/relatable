@@ -11,6 +11,8 @@ Changes for each release.
 
 ### Version 0.0.3
 
+Fri Apr  5 15:01:27 UTC 2013
+
  * Add `.gitignore`. #51.
  * Implement commit and rollback. #35. #34.
  * Evaluated parameters. #43.
