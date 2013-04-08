@@ -29,6 +29,7 @@ exports.update = function(definition) {
     }
     operation = {
       type: "update",
+      schema: update.schema,
       table: update.table,
       literals: update.literals,
       parameters: {},
@@ -72,6 +73,7 @@ exports["delete"] = function(definition, object) {
     mutation = scanner.mutation(definition);
     operation = {
       type: "delete",
+      schema: mutation.schema,
       table: mutation.table,
       where: {}
     };
@@ -105,6 +107,7 @@ exports.insert = function(definition, object, type) {
     mutation = scanner.mutation(definition);
     operation = {
       type: type,
+      schema: mutation.schema,
       table: mutation.table,
       where: mutation.where,
       parameters: {},

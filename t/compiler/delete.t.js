@@ -5,6 +5,7 @@ require("./proof")(3, function (compiler, object, deepEqual) {
 
   expected = {
     type: "delete",
+    schema: "public",
     table: "Section",
     where: object
   };
@@ -13,6 +14,7 @@ require("./proof")(3, function (compiler, object, deepEqual) {
 
   expected = {
     type: "delete",
+    schema: "public",
     table: "Section",
     where: { id: 1 }
   };
@@ -21,9 +23,10 @@ require("./proof")(3, function (compiler, object, deepEqual) {
 
   expected = {
     type: "delete",
-    table: "public.Section",
+    schema: "x",
+    table: "Section",
     where: { id: 1 }
   };
-  actual = compiler.delete("public.Section(id)", object);
+  actual = compiler.delete("x.Section(id)", object);
   deepEqual(actual, expected, "with schema and key");
 });

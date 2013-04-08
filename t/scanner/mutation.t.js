@@ -4,6 +4,7 @@ require("./proof")(10, function (scanner, equal, deepEqual) {
   var expected, mutation;
   expected = {
     table: "Section"
+  , schema: "public"
   , where: []
   , columns: []
   , literals: {}
@@ -13,16 +14,18 @@ require("./proof")(10, function (scanner, equal, deepEqual) {
 
   var expected, mutation;
   expected = {
-    table: "public.Section"
+    table: "Section"
+  , schema: "x"
   , where: []
   , columns: []
   , literals: {}
   };
-  mutation = scanner.mutation("public.Section");
+  mutation = scanner.mutation("x.Section");
   deepEqual(mutation, expected, "schema and table only");
 
   expected = {
     table: "Section"
+  , schema: "public"
   , where: [ 'id' ]
   , columns: []
   , literals: {}
@@ -32,6 +35,7 @@ require("./proof")(10, function (scanner, equal, deepEqual) {
 
   expected = {
     table: "Section"
+  , schema: "public"
   , where: [ 'id' ]
   , columns: [ 'rgt', 'lft' ]
   , literals: {}
@@ -41,6 +45,7 @@ require("./proof")(10, function (scanner, equal, deepEqual) {
 
   expected = {
     table: "Section"
+  , schema: "public"
   , where: []
   , columns: [ 'rgt', 'lft' ]
   , literals: {}
@@ -50,6 +55,7 @@ require("./proof")(10, function (scanner, equal, deepEqual) {
 
   expected = {
     table: "Section"
+  , schema: "public"
   , where: [ 'id' ]
   , columns: [ "*" ]
   , literals: {}
@@ -59,6 +65,7 @@ require("./proof")(10, function (scanner, equal, deepEqual) {
 
   expected = {
     table: "Section"
+  , schema: "public"
   , where: [ 'id' ]
   , columns: []
   , literals: {
@@ -73,6 +80,7 @@ require("./proof")(10, function (scanner, equal, deepEqual) {
 
   expected = {
     columns: []
+  , schema: "public"
   , where: [ 'id' ]
   , literals: {
       name: '\'Axme\''
@@ -84,6 +92,7 @@ require("./proof")(10, function (scanner, equal, deepEqual) {
 
   expected = {
     columns: [ 'rgt', 'lft' ]
+  , schema: "public"
   , where: [ 'id' ]
   , literals: {
       updatedAt: 'DATE_FORMAT(CURRENT_TIMESTAMP(), \'%D %y %a %d %m %b %j\')'
@@ -99,14 +108,15 @@ require("./proof")(10, function (scanner, equal, deepEqual) {
 
   expected = {
     columns: [ 'rgt', 'lft' ]
+  , schema: "x"
   , where: [ 'id' ]
   , literals: {
       updatedAt: 'DATE_FORMAT(CURRENT_TIMESTAMP(), \'%D %y %a %d %m %b %j\')'
     }
-  , table: "public.Section"
+  , table: "Section"
   };
   mutation = scanner.mutation("\n\
-    public.Section(id) \n\
+    x.Section(id) \n\
       updatedAt = DATE_FORMAT(CURRENT_TIMESTAMP(), '%D %y %a %d %m %b %j'), \n\
       rgt, lft \n\
   ");

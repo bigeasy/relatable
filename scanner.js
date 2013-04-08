@@ -471,13 +471,17 @@ function Scanner () {
   }
 
   function mutation (text, keyed) {
-    var $, table, column, literals;
+    var $, schema = 'public', table, column, literals;
     reset(text);
     var table = advance("cannot find table specification", re["table" /*
       \s*                            // possible white space.
       (\w[\w\d_]*(?:\.\w[\w\d_]*)?)  // capture an schema qualified JavaScript identifier.
       \s*
     */]).shift();
+    $ = table.split('.');
+    if ($.length == 2) {
+      schema = $[0], table = $[1]; 
+    }
     var columns = [];
     var literals = {};
     $ = /^(\s*)(\(?)/.exec(rest)
@@ -528,7 +532,7 @@ function Scanner () {
           columns.push(column);
       }
     }
-    return { table: table, columns: columns, literals: literals, where: where };
+    return { schema: schema, table: table, columns: columns, literals: literals, where: where };
   }
 
   this.mutation = mutation;

@@ -4,6 +4,7 @@ require("./proof")(5, function (compiler, object, deepEqual) {
   var expected, actual;
   expected = {
     type: "insert",
+    schema: "public",
     table: "Section",
     parameters: object,
     where: [],
@@ -14,6 +15,7 @@ require("./proof")(5, function (compiler, object, deepEqual) {
 
   expected = {
     type: "insert",
+    schema: "public",
     table: "Section",
     parameters: object,
     where: [ "id" ],
@@ -24,6 +26,7 @@ require("./proof")(5, function (compiler, object, deepEqual) {
 
   expected = {
     type: "insert",
+    schema: "public",
     table: "Section",
     parameters: { permalink: "home" },
     where: [ "id" ],
@@ -34,6 +37,7 @@ require("./proof")(5, function (compiler, object, deepEqual) {
 
   expected = {
     type: "insert",
+    schema: "public",
     table: "Section",
     parameters: {},
     where: [ "id" ],
@@ -44,11 +48,12 @@ require("./proof")(5, function (compiler, object, deepEqual) {
 
   expected = {
     type: "insert",
-    table: "public.Section",
+    schema: "x",
+    table: "Section",
     parameters: {},
     where: [ "id" ],
     literals: { permalink: "'home'" }
   };
-  actual = compiler.insert("public.Section(id) permalink = 'home'", object);
+  actual = compiler.insert("x.Section(id) permalink = 'home'", object);
   deepEqual(actual, expected, "schema and literals");
 });

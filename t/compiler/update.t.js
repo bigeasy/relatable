@@ -4,6 +4,7 @@ require("./proof")(6, function (object, compiler, deepEqual) {
   var expected, actual;
   expected = {
     type: "update",
+    schema: "public",
     table: "Section",
     where: { id: 1 },
     parameters: { rgt: 1, lft: 2, permalink: "home" },
@@ -14,6 +15,7 @@ require("./proof")(6, function (object, compiler, deepEqual) {
 
   expected = {
     type: "update",
+    schema: "public",
     table: "Section",
     where: { id: 1 },
     parameters: { rgt: 1, lft: 2 },
@@ -24,6 +26,7 @@ require("./proof")(6, function (object, compiler, deepEqual) {
 
   expected = {
     type: "update",
+    schema: "public",
     table: "Section",
     where: { id: 1 },
     parameters: { rgt: 1, lft: 2, permalink: "home" },
@@ -34,6 +37,7 @@ require("./proof")(6, function (object, compiler, deepEqual) {
 
   expected = {
     type: "update",
+    schema: "public",
     table: "Section",
     where: { id: 1 },
     parameters: { rgt: 1, lft: 2, permalink: "home" },
@@ -44,6 +48,7 @@ require("./proof")(6, function (object, compiler, deepEqual) {
 
   expected = {
     type: "update",
+    schema: "public",
     table: "Section",
     where: { id: 1 },
     parameters: { rgt: 1, lft: 2, permalink: "home" },
@@ -58,7 +63,8 @@ require("./proof")(6, function (object, compiler, deepEqual) {
 
   expected = {
     type: "update",
-    table: "public.Section",
+    schema: "x",
+    table: "Section",
     where: { id: 1 },
     parameters: { rgt: 1, lft: 2, permalink: "home" },
     literals: {
@@ -66,7 +72,7 @@ require("./proof")(6, function (object, compiler, deepEqual) {
     }
   };
   actual = compiler.update(" \
-    public.Section(id) *, updatedAt = DATE_FORMAT(CURRENT_TIMESTAMP(), '%D %y %a %d %m %b %j'), \
+    x.Section(id) *, updatedAt = DATE_FORMAT(CURRENT_TIMESTAMP(), '%D %y %a %d %m %b %j'), \
   ", object);
   deepEqual(actual, expected, "schema, star and literals");
 });
