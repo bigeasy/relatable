@@ -249,16 +249,12 @@ Mutator.prototype.rollback = function (callback) {
   mutator._enqueue({ type: "rollback" }, callback);
 }
 
-Mutator.prototype.sql = function (sql, parameters) {
-  var mutator = this;
-  if (parameters == null) {
-    parameters = [];
+Mutator.prototype.sql = function (sql) {
+  var mutator = this, shiftable = __slice.call(arguments, 1), object = {}, callback;
+  if (shiftable.length && (typeof shiftable[shiftable.length - 1] == "function")) {
+    callback = shiftable.pop();
   }
-  mutator.operations.push({
-    type: "raw",
-    sql: sql,
-    parameters: parameters
-  });
+  mutator._enqueue({ type: 'raw', sql: sql, parameters: shiftable }, callback);
 };
 
 Mutator.prototype.select = function () {

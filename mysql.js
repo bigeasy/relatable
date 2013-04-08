@@ -99,13 +99,11 @@ function Connection(_client) {
 
 require("util").inherits(Connection, Mutator);
 
-Connection.prototype.sql = function(query, parameters, callback) {
-  var connection = this;
+Connection.prototype.sql = function(sql, parameters, callback) {
   try {
-    connection._client.query(query, parameters, callback);
+    this._client.query(sql, parameters, callback);
   } catch (error) {
-    console.error("CLOSING");
-    connection.close(null, callback);
+    callback(error);
   }
 };
 

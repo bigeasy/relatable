@@ -13,16 +13,8 @@ function Mutator() {}
 
 exports.Mutator = Mutator;
 
-Mutator.prototype.raw = function (mutation, operation) {
-  var mutator = this, relatable = mutation.mutator.relatable;
-  mutator.sql(operation.sql, operation.parameters, function (error, results) {
-    if (error) {
-      mutation.callback(error);
-    } else {
-      mutation.results.push(results);
-      mutation.mutate();
-    }
-  });
+Mutator.prototype.raw = function (mutation, operation, callback) {
+  this.sql(operation.sql, operation.parameters, callback);
 };
 
 Mutator.prototype.select = function (mutation, operation) {
