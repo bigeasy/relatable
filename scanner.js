@@ -336,25 +336,31 @@ function Scanner () {
     for (;;) {
       if (rest[0] != "") {
         $ = /^([^(\s]+)(\(|\s*)([^\u0000]*)$/i.exec(rest);
-        var name = $[1], paren = $[2]
+        var name = $[1], paren = $[2], schema;
         rest = $[3];
         if (paren == "(") {
           before.push(name);
           before.push(paren);
           skipParenthesis();
         } else {
+          value.push(name);
+          $ = name.split(/\./);
+          if ($.length == 2) {
+            schema = $[0], name = $[1];
+          } else {
+            schema = 'public';
+          }
           // When we want to pull quoted names, we only capture as.
           if ($ = /^(AS\s+)(\S+)(\s*)([^\u0000]*)$/i.exec(rest)) {
-            value.push(name);
             value.push(paren);
             var as = $[1], alias = $[2], after = $[3];
             rest = $[4];
             value.push(as);
             value.push(alias);
-            token({ alias: alias, name: name, type: "table" });
+            token({ schema: schema, alias: alias, name: name, type: "table" });
             before.push(after);
           } else {
-            token({ value: name, alias: name, name: name, type: "table" });
+            token({ schema: schema, alias: name, name: name, type: "table" });
             before = [ paren ];
           }
           var conditions = [];

@@ -6,7 +6,7 @@ require("./proof")(8, function (scanner, ok, deepEqual) {
   deepEqual(tree, [
     { before: 'SELECT ', value: '*', type: 'all' },
     { type: "from", before: " ", value:"FROM" },
-    { before: ' ', alias: 'a', value: 'a', type: 'table', name: 'a' },
+    { before: ' ', alias: 'a', value: 'a', schema: 'public', type: 'table', name: 'a' },
     { before: '', type: 'stuff', value: '' },
     { before: '', type: 'rest', value: '' } ]
   , 'scan a minimal select statement');
@@ -15,7 +15,7 @@ require("./proof")(8, function (scanner, ok, deepEqual) {
   deepEqual(tree, [
       { before: 'SELECT ', value: '*', type: 'all' },
       { type: "from", before: " ", value:"FROM" },
-      { before: ' ', alias: 'a', value: 'a', type: 'table', name: 'a' },
+      { before: ' ', alias: 'a', value: 'a', schema: 'public', type: 'table', name: 'a' },
       { value: '', type: 'stuff', before: ' WHERE id = ?' },
       { before: '', type: 'rest', value: '' } ]
   , 'scan a minimal select statement with where clause');
@@ -24,7 +24,7 @@ require("./proof")(8, function (scanner, ok, deepEqual) {
   deepEqual(tree, [
     { before: 'SELECT ', value: 'a.*', type: 'tableAll', table: 'a' },
     { type: "from", before: " ", value:"FROM" },
-    { before: ' ', alias: 'a', value: 'a', type: 'table', name: 'a' },
+    { before: ' ', alias: 'a', value: 'a', schema: 'public', type: 'table', name: 'a' },
     { before: '', type: 'stuff', value: '' },
     { before: '', type: 'rest', value: '' } ]
   , 'scan table all');
@@ -33,7 +33,7 @@ require("./proof")(8, function (scanner, ok, deepEqual) {
   deepEqual(tree, [
     { before: 'SELECT ', value: 'a .\n*', type: 'tableAll', table: 'a' },
     { type: "from", before: " ", value:"FROM" },
-    { before: ' ', alias: 'a', value: 'a', type: 'table', name: 'a' },
+    { before: ' ', alias: 'a', value: 'a', schema: 'public', type: 'table', name: 'a' },
     { before: '', type: 'stuff', value: '' },
     { before: '', type: 'rest', value: '' } ]
   , 'test: scan spaced table all');
@@ -42,8 +42,8 @@ require("./proof")(8, function (scanner, ok, deepEqual) {
   deepEqual(tree, [
     { before: 'SELECT ', value: '*', type: 'all' },
     { type: "from", before: " ", value:"FROM" },
-    { value: 'a', alias: 'a', name: 'a', type: 'table', before: ' ' },
-    { value: 'b', alias: 'b', name: 'b', type: 'table', before: ' JOIN ' },
+    { value: 'a', alias: 'a', name: 'a', schema: 'public', type: 'table', before: ' ' },
+    { value: 'b', alias: 'b', name: 'b', schema: 'public', type: 'table', before: ' JOIN ' },
     { type: 'left', index: 1, value: 'a.id', before: ' ON ', table: 'a', column: 'id' },
     { type: 'right', index: 1, value: 'b.a_id', before: ' = ', table: 'b', column: 'a_id' },
     { before: '', type: 'stuff', value: '' },
@@ -54,7 +54,7 @@ require("./proof")(8, function (scanner, ok, deepEqual) {
   deepEqual(tree, [
     { before: 'SELECT ', value: '*', type: 'all' },
     { type: "from", before: " ", value:"FROM" },
-    { before: ' ', alias: 'a', value: 'Aardvark AS a', type: 'table', name: 'Aardvark' },
+    { before: ' ', alias: 'a', value: 'Aardvark AS a', schema: 'public', type: 'table', name: 'Aardvark' },
     { before: '', type: 'stuff', value: '' },
     { before: '', type: 'rest', value: '' } ]
   , 'scan a table alias');
