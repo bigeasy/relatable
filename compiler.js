@@ -20,6 +20,7 @@ exports.update = function(definition) {
     for (key in definition) {
       operation[key] = definition[key];
     }
+    if (!operation.schema) operation.schema = 'public';
   } else {
     update = scanner.mutation(definition, true);
     if (splat.length === 2) {
@@ -69,6 +70,7 @@ exports["delete"] = function(definition, object) {
     for (key in definition) {
       operation[key] = definition[key];
     }
+    if (!operation.schema) operation.schema = 'public';
   } else {
     mutation = scanner.mutation(definition);
     operation = {
