@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-require("./proof")(8, function (scanner, equal, deepEqual) {
+
+require("./proof")(10, function (scanner, equal, deepEqual) {
   var expected, mutation;
   expected = {
     table: "Section"
@@ -9,6 +10,16 @@ require("./proof")(8, function (scanner, equal, deepEqual) {
   };
   mutation = scanner.mutation("Section");
   deepEqual(mutation, expected, "table only");
+
+  var expected, mutation;
+  expected = {
+    table: "public.Section"
+  , where: []
+  , columns: []
+  , literals: {}
+  };
+  mutation = scanner.mutation("public.Section");
+  deepEqual(mutation, expected, "schema and table only");
 
   expected = {
     table: "Section"
@@ -85,6 +96,21 @@ require("./proof")(8, function (scanner, equal, deepEqual) {
       rgt, lft \n\
   ");
   deepEqual(mutation, expected, "with columns and literals");
+
+  expected = {
+    columns: [ 'rgt', 'lft' ]
+  , where: [ 'id' ]
+  , literals: {
+      updatedAt: 'DATE_FORMAT(CURRENT_TIMESTAMP(), \'%D %y %a %d %m %b %j\')'
+    }
+  , table: "public.Section"
+  };
+  mutation = scanner.mutation("\n\
+    public.Section(id) \n\
+      updatedAt = DATE_FORMAT(CURRENT_TIMESTAMP(), '%D %y %a %d %m %b %j'), \n\
+      rgt, lft \n\
+  ");
+  deepEqual(mutation, expected, "with schema, columns and literals");
 
   try {
     scanner.mutation("Section");

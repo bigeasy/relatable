@@ -474,8 +474,8 @@ function Scanner () {
     var $, table, column, literals;
     reset(text);
     var table = advance("cannot find table specification", re["table" /*
-      \s*           // possible white space.
-      (\w[\w\d_]*)  // capture an JavaScript identifier.
+      \s*                            // possible white space.
+      (\w[\w\d_]*(?:\.\w[\w\d_]*)?)  // capture an schema qualified JavaScript identifier.
       \s*
     */]).shift();
     var columns = [];
