@@ -22,8 +22,5 @@
     , "pg": ">=0"
     , "proof": "0.0.27"
     }
-,   "scripts" :
-    { "test":
-      "(proof run t/*/*.t.js | tee .proof.out | proof progress) || (proof errors < .proof.out)"
-    }
+,   "scripts" : { "test": "proof platform win32 && proof test */*/*.t.js || t/test" }
 }
