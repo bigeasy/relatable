@@ -115,7 +115,7 @@ function Connection(_client) {
 require("util").inherits(Connection, Mutator);
 
 Connection.prototype.sql = function(query, parameters, callback) {
-  return this._client.query(query, parameters, callback);
+  this._client.query(query, parameters, callback);
 };
 
 Connection.prototype.close = cadence(function(step, terminator) {
