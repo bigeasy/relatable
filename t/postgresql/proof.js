@@ -6,10 +6,14 @@ module.exports = require("proof")(function () {
   var context;
   return context = {
     relatable: new Relatable(configuration.databases.postgresql),
-    resetManufacturer:  function (callback) {
-      context.relatable.sql("DELETE FROM Manufacturer WHERE id > 1", function (error) {
+    resetManufacturer:  function (schema, callback) {
+      if (!callback) {
+        callback = schema;
+        schema = 'public';
+      }
+      context.relatable.sql("DELETE FROM " + schema + ".Manufacturer WHERE id > 1", function (error) {
         if (error) throw error;
-        context.relatable.sql("UPDATE Manufacturer SET name = 'Acme' WHERE id = 1", callback);
+        context.relatable.sql("UPDATE " + schema + ".Manufacturer SET name = 'Acme' WHERE id = 1", callback);
       });
     }
   }

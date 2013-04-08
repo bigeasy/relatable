@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-require("./proof")(3, function (step, relatable, resetManufacturer, ok, equal, deepEqual) {
+require("./proof")(4, function (step, relatable, resetManufacturer, ok, equal, deepEqual) {
   var mutator;
 
   step(function () {
@@ -42,6 +42,24 @@ require("./proof")(3, function (step, relatable, resetManufacturer, ok, equal, d
 
       var names = manufacturers.map(function (manufacturer) { return manufacturer.name });
       deepEqual(names, [ "Acme", "Yoyodyne" ], "insert if");
+
+      resetManufacturer('sales', step());
+
+  }, function () {
+
+      mutator = relatable.mutate();
+      mutator.insertIf("sales.Manufacturer(name) name", { name: "Acme" });
+      mutator.insertIf("sales.Manufacturer(name)", { name: "Yoyodyne" });
+      mutator.commit(step());
+
+  }, function () {
+
+      relatable.select("SELECT * FROM sales.manufacturer ORDER BY name", step());
+
+  }, function (manufacturers) {
+
+      var names = manufacturers.map(function (manufacturer) { return manufacturer.name });
+      deepEqual(names, [ "Acme", "Yoyodyne" ], "schema insert if");
 
   });
 });

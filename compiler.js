@@ -103,6 +103,7 @@ exports.insert = function(definition, object, type) {
     for (key in definition) {
       operation[key] = definition[key];
     }
+    if (!operation.schema) operation.schema = 'public';
   } else {
     mutation = scanner.mutation(definition);
     operation = {

@@ -47,7 +47,7 @@ Mutator.prototype.insertIf = function (mutation, operation, callback) {
   var mutator = this,
       relatable = mutation.relatable,
       table = operation.table,
-      schema = mutation.schema.public[table.toLowerCase()],
+      schema = mutation.schema[operation.schema.toLowerCase()][table.toLowerCase()],
       parameters = Object.keys(operation.parameters),
       literals = Object.keys(operation.literals),
       into = parameters.concat(literals)
@@ -59,12 +59,12 @@ Mutator.prototype.insertIf = function (mutation, operation, callback) {
               }),
       dual = mutation.relatable._engine._dual ? "FROM DUAL\n" : "",
       sql = "\
-    INSERT INTO " + (relatable._toSQL(table)) + " (" + (into.join(", ")) + ")\n\
+    INSERT INTO " + qualify(relatable, operation) + " (" + (into.join(", ")) + ")\n\
     SELECT " + (values.join(", ")) + "\n\
     " + dual +"\
     WHERE NOT EXISTS (\n\
       SELECT 1\n\
-      FROM " + (relatable._toSQL(table)) + "\n\
+      FROM " + qualify(relatable, operation) + "\n\
       WHERE " + where.join(" AND ") + "\n\
     )\n\
     ";
@@ -80,11 +80,17 @@ Mutator.prototype.insertIf = function (mutation, operation, callback) {
   });
 }
 
+function qualify (relatable, operation) {
+  return operation.schema == 'public'
+       ? relatable._toSQL(operation.table)
+       : relatable._toSQL(operation.schema) + '.' + relatable._toSQL(operation.table);
+}
+
 Mutator.prototype.insert = function (mutation, operation, callback) {
   var mutator = this,
       relatable = mutation.relatable,
       table = operation.table,
-      schema = mutation.schema.public[table.toLowerCase()],
+      schema = mutation.schema[operation.schema.toLowerCase()][table.toLowerCase()],
       parameters = Object.keys(operation.parameters),
       literals = Object.keys(operation.literals),
       into = parameters.concat(literals)
@@ -92,7 +98,7 @@ Mutator.prototype.insert = function (mutation, operation, callback) {
       values = parameters.map(function (_, index) { return mutator._placeholder(index) })
                          .concat(literals.map(function (key) { return operation.literals[key] })),
       sql = "\
-    INSERT INTO " + (relatable._toSQL(table)) + " (" + (into.join(", ")) + ")\n\
+    INSERT INTO " + qualify(relatable, operation) + " (" + (into.join(", ")) + ")\n\
     VALUES(" + values.join(", ") + ")\n\
     ";
   values = parameters.map(function (key) {
@@ -118,7 +124,7 @@ Mutator.prototype.update = function (mutation, operation, callback) {
       where = [],
       parameters = [],
       exists = {}, sql, key;
-  mutation.schema.public[table.toLowerCase()].columns.forEach(function (key) {
+  mutation.schema[operation.schema.toLowerCase()][table.toLowerCase()].columns.forEach(function (key) {
     exists[key.toLowerCase()] = true;
   });
   for (key in operation.parameters) {
@@ -137,7 +143,7 @@ Mutator.prototype.update = function (mutation, operation, callback) {
     where.push("" + (relatable._toSQL(k)) + " = " + (mutator._placeholder(setOrder.length + i)));
   });
   sql = "\
-    UPDATE " + table + "\n\
+    UPDATE " + qualify(relatable, operation) + "\n\
     SET " + (set.join(", ")) + "\n\
     WHERE " + (where.join(" AND "));
   setOrder.forEach(function (key) {
@@ -162,7 +168,7 @@ Mutator.prototype["delete"] = function (mutation, operation, callback) {
         return "" + relatable._toSQL(k) + " = " + mutator._placeholder(i);
       }),
       sql = "\
-        DELETE FROM " + (relatable._toSQL(table)) + "\n\
+        DELETE FROM " + qualify(relatable, operation) + "\n\
         WHERE " + (conditions.join(" AND ")) + "\n\
         ",
       parameters = selected.map(function (key) { return where[key] });
