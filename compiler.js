@@ -204,12 +204,12 @@ function compile (path, scan, schema, placeholder) {
     expansion.expansions = [];
     if (expansion.type === "all") {
       tables.forEach(function (table) {
-        expansion.expansions.push([table.token.name, table.token.alias]);
+        expansion.expansions.push([table.token.schema, table.token.name, table.token.alias]);
       });
     } else {
       tables.forEach(function (table) {
         if (table.token.alias == expansion.table) {
-          expansion.expansions.push([table.token.name, table.token.alias]);
+          expansion.expansions.push([table.token.schema, table.token.name, table.token.alias]);
           // break;
         }
       });
@@ -217,11 +217,11 @@ function compile (path, scan, schema, placeholder) {
   });
   var seen = {}, selected = [], columns = [],
       structure = { temporary: "relatable_temporary_" + (++identifier) },
-      table, alias, parameters = [];
+      _schema, table, alias, parameters = [];
   while (expansions.length) {
     if (expansions[0].expansions.length) {
-      $ = expansions[0].expansions.shift(), table = $[0], alias = $[1];
-      schema.public[table.toLowerCase()].columns.forEach(function (column) {
+      $ = expansions[0].expansions.shift(), _schema = $[0], table = $[1], alias = $[2];
+      schema[_schema.toLowerCase()][table.toLowerCase()].columns.forEach(function (column) {
         var qualifiedName = "" + alias + "." + column;
         if (!seen[qualifiedName]) {
           columns.push({
