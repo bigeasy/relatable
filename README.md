@@ -9,6 +9,11 @@ discussion](https://github.com/bigeasy/relatable/issues/10).
 
 Changes for each release.
 
+### Version 0.0.4
+
+ * Specify schema in `FROM` and `JOIN`. #52.
+ * Gather test coverage from Travis CI using Istanbul and send to coveralls.io.
+
 ### Version 0.0.3
 
 Fri Apr  5 15:01:27 UTC 2013
