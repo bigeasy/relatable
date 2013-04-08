@@ -1,4 +1,4 @@
-# Relatable [![Build Status](https://secure.travis-ci.org/bigeasy/relatable.png?branch=master)](http://travis-ci.org/bigeasy/relatable)
+# Relatable [![Build Status](https://secure.travis-ci.org/bigeasy/relatable.png?branch=master)](http://travis-ci.org/bigeasy/relatable) [![Coverage Status](https://coveralls.io/repos/bigeasy/relatable/badge.png?branch=master)](https://coveralls.io/r/bigeasy/relatable) [![NPM version](https://badge.fury.io/js/relatable.png)](http://badge.fury.io/js/relatable)
 
 Turns your SQL queries in to JSON trees.
 
