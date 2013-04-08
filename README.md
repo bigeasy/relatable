@@ -11,6 +11,8 @@ Changes for each release.
 
 ### Version 0.0.4
 
+ * Implement raw SQL in the mutator transaction. #55.
+ * Allow schema qualified table names in mutations. #54. #27.
  * Specify schema in `FROM` and `JOIN`. #52.
  * Gather test coverage from Travis CI using Istanbul and send to coveralls.io.
 
