@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-require("./proof")(4, function (compiler, object, deepEqual) {
+require("./proof")(5, function (compiler, object, deepEqual) {
   var expected, actual;
   expected = {
     type: "insert",
@@ -41,4 +41,14 @@ require("./proof")(4, function (compiler, object, deepEqual) {
   };
   actual = compiler.insert("Section(id) permalink = 'home'", object);
   deepEqual(actual, expected, "literals");
+
+  expected = {
+    type: "insert",
+    table: "public.Section",
+    parameters: {},
+    where: [ "id" ],
+    literals: { permalink: "'home'" }
+  };
+  actual = compiler.insert("public.Section(id) permalink = 'home'", object);
+  deepEqual(actual, expected, "schema and literals");
 });

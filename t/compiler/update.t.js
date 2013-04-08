@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-require("./proof")(5, function (object, compiler, deepEqual) {
+require("./proof")(6, function (object, compiler, deepEqual) {
   var expected, actual;
   expected = {
     type: "update",
@@ -55,4 +55,18 @@ require("./proof")(5, function (object, compiler, deepEqual) {
     Section(id) *, updatedAt = DATE_FORMAT(CURRENT_TIMESTAMP(), '%D %y %a %d %m %b %j'), \
   ", object);
   deepEqual(actual, expected, "star and literals");
+
+  expected = {
+    type: "update",
+    table: "public.Section",
+    where: { id: 1 },
+    parameters: { rgt: 1, lft: 2, permalink: "home" },
+    literals: {
+      updatedAt: 'DATE_FORMAT(CURRENT_TIMESTAMP(), \'%D %y %a %d %m %b %j\')'
+    }
+  };
+  actual = compiler.update(" \
+    public.Section(id) *, updatedAt = DATE_FORMAT(CURRENT_TIMESTAMP(), '%D %y %a %d %m %b %j'), \
+  ", object);
+  deepEqual(actual, expected, "schema, star and literals");
 });
