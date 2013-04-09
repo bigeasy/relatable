@@ -11,6 +11,8 @@ Changes for each release.
 
 ### Version 0.0.4
 
+Mon Apr  8 23:53:03 UTC 2013
+
  * Implement raw SQL in the mutator transaction. #55.
  * Allow schema qualified table names in mutations. #54. #27.
  * Specify schema in `FROM` and `JOIN`. #52.
