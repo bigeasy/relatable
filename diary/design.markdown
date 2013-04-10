@@ -55,3 +55,4 @@ higher level language, an object mapping language, shudder.
 
  * Because relatable demands that you paginate your responses, because of this,
  you're able to devise a straight-forward caching solution, if you want to.
+ * Probably move most of `engine.js` into `relatable.js`.
