@@ -258,16 +258,15 @@ Mutator.prototype.sql = function (sql) {
 };
 
 Mutator.prototype.select = function () {
-  var mutator = this, sql, parameters = __slice.call(arguments), strings = [];
-  while (typeof parameters[0] == "string") {
-    strings.push(parameters.shift());
+  var mutator = this, sql, shiftable = __slice.call(arguments), strings = [], callback;
+  if (typeof shiftable[shiftable.length - 1] == "function") {
+    callback = shiftable.pop();
   }
-  parameters = parameters[0] || {};
-  return mutator.operations.push({
-    type: "select",
-    strings: strings,
-    parameters: parameters
-  });
+  while (typeof shiftable[0] == "string") {
+    strings.push(shiftable.shift());
+  }
+  shiftable = shiftable[0] || {};
+  mutator._enqueue({ type: 'select', strings: strings, parameters: shiftable }, callback);
 };
 
 Mutator.prototype._enqueue = function (operation, callback) {

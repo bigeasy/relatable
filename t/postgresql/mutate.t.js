@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-require("./proof")(1, function (step, resetManufacturer, relatable, deepEqual) {
+require("./proof")(3, function (step, resetManufacturer, relatable, deepEqual) {
   var mutator;
 
   step(function () {
@@ -10,16 +10,37 @@ require("./proof")(1, function (step, resetManufacturer, relatable, deepEqual) {
   }, function () {
 
       mutator = relatable.mutate();
-      mutator.sql("SELECT * FROM product", step());
+      mutator.insert("Manufacturer name", { name: "Omni Consumer Products" });
+      mutator.insert("Manufacturer", { name: "Yoyodyne" });
+      mutator.sql("SELECT name FROM manufacturer ORDER BY name", step());
 
   }, function (result) {
 
-    deepEqual(result.rows,
-       [ { id: 1,
-           manufacturer_id: 1,
-           manufacturer_code: 'A',
-           name: 'Heavy Anvil' } ], 'sql');
-    mutator.rollback();
+      deepEqual(result.rows,
+         [ { name: "Acme" },
+           { name: "Omni Consumer Products" },
+           { name: "Yoyodyne" } ], 'sql');
+
+      mutator.select("SELECT * FROM manufacturer ORDER BY name", step());
+
+  }, function (result) {
+
+      deepEqual(
+        result.map(function (manufacturer) { return manufacturer.name }),
+         [ "Acme", "Omni Consumer Products", "Yoyodyne" ], 'select');
+
+  }, function () {
+
+    relatable.select("SELECT * FROM manufacturer ORDER BY name", step());
+
+  }, function (result) {
+
+      deepEqual(
+        result.map(function (manufacturer) { return manufacturer.name }),
+         [ "Acme" ], 'isolated');
+      
+      mutator.rollback();
 
   });
+
 });

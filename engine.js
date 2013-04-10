@@ -17,22 +17,13 @@ Mutator.prototype.raw = function (mutation, operation, callback) {
   this.sql(operation.sql, operation.parameters, callback);
 };
 
-Mutator.prototype.select = function (mutation, operation) {
-  var callback, relatable = mutation.mutator.relatable;
-  callback = function (error, results) {
-    if (error) {
-      mutation.callback(error);
-    } else {
-      mutation.results.push(results);
-      mutation.mutate();
-    }
-  };
-  relatable._select(mutation.schema,
-                    mutation.connection,
-                    operation.strings,
-                    operation.parameters,
-                    false,
-                    callback);
+Mutator.prototype.select = function (mutation, operation, callback) {
+  mutation.relatable._select(mutation.schema,
+                             mutation.connection,
+                             operation.strings,
+                             operation.parameters,
+                             false,
+                             callback);
 };
 
 Mutator.prototype.insertIf = function (mutation, operation, callback) {
