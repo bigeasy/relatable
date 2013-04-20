@@ -313,7 +313,6 @@ function compile (path, scan, schema, placeholder) {
         sql.push(token.before);
         sql.push(token.value || "");
         break;
-      case "table":
       case "left":
       case "right":
       case "rest":
