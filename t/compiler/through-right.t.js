@@ -12,14 +12,14 @@ require("./proof")(5, function (step, compiler, schema, placeholder, equal, deep
         FROM Sale AS sale \
     ", schema, placeholder);
 
-    structure = compilation.structure;
-    expected = " \
+    var structure = compilation.structure;
+    var expected = " \
       SELECT sale.id AS sale__id, \
              sale.customerId AS sale__customerId \
         FROM Sale AS sale \
     ".trim().replace(/\s+/g, ' ');
-    length = Math.MAX_VALUE;
-    actual = structure.sql.trim().replace(/\s+/g, ' ').substring(0, length);
+    var length = Math.MAX_VALUE;
+    var actual = structure.sql.trim().replace(/\s+/g, ' ').substring(0, length);
     equal(expected.substring(0, length), actual, "parent sql");
     expected = " \
       SELECT products.id AS products__id, \

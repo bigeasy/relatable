@@ -87,7 +87,7 @@ function Scanner () {
   function evaluated () {
     token({ type: 'stuff' });
     before.push(bump());
-    var depth = 1, source = '';
+    var depth = 1, source = '', $;
     while (rest[0] != '}' && ($ = /^(?:[^'"{}]*|'(?:[^\\']|\\.)*'|"(?:[^\\"]|\\.)*")*/.exec(rest))) {
       value.push($[0]);
       source += $[0];

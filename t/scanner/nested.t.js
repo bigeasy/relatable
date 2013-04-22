@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 require("./proof")(1, function (scanner, deepEqual) {
-  tree = scanner.query("\
+  var tree = scanner.query("\
       SELECT *, \
         (SELECT *, \
               (SELECT * \

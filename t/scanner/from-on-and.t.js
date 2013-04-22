@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 require("./proof")(1, function (scanner, deepEqual) {
-  tree = scanner.query("\
+  var tree = scanner.query("\
         SELECT *, \
               (SELECT * \
                  FROM sale_item AS item ON product.manufacturer_id = item.manufacturer_id \

@@ -11,7 +11,7 @@ require("./proof")(2, function (equal, compiler, schema, placeholder) {
     ", schema, placeholder);
 
     structure = compilation.structure;
-    expected = " \
+    var expected = " \
       SELECT products.id AS products__id, \
              products.manufacturerId AS products__manufacturerId, \
              products.manufacturerCode AS products__manufacturerCode, \
@@ -21,8 +21,8 @@ require("./proof")(2, function (equal, compiler, schema, placeholder) {
                                 AND products.manufacturerCode = item.manufacturerCode \
        WHERE item.sale_id = ? \
     ".trim().replace(/\s+/g, ' ');
-    length = Math.MAX_VALUE;
-    actual = structure.sql.trim()
+    var length = Math.MAX_VALUE;
+    var actual = structure.sql.trim()
                       .replace(/relatable_temporary_\d+/, "relatable_temporary_N")
                       .replace(/\s+/g, ' ').substring(0, length);
     equal(actual, expected.substring(0, length), "test via join table sql");

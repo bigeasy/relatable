@@ -147,7 +147,7 @@ Selection.prototype.select = function (structures, callback) {
     return parameter(parameters)
   });
   if (structures[0].joins.length) {
-    prepare = this.relatable._engine.temporary(structures[0], parameters);
+    var prepare = this.relatable._engine.temporary(structures[0], parameters);
     this.cleanup.push("DROP TABLE " + structures[0].temporary);
     this.temporary(structures, prepare, callback);
   } else {

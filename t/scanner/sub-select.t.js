@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 require("./proof")(2, function (scanner, deepEqual) {
-  tree = scanner.query("\
+  var tree = scanner.query("\
     SELECT *,\n\
           (SELECT * FROM b AS d ON c.id = d.id)\n\
       FROM a AS c\n\
