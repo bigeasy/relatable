@@ -66,9 +66,9 @@ Selection.prototype.join = function (structures, expanded, callback) {
   selection.completed[structure.pivot] = expanded;
   structures.push.apply(structures, structure.joins);
   if (structures.length) {
-    return selection.select(structures, callback);
+    selection.select(structures, callback);
   } else {
-    return selection.complete(callback);
+    selection.complete(callback);
   }
 };
 
