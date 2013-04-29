@@ -1,4 +1,4 @@
 /node_modules
-configuration.json
-.proof.out
+/configuration.json
+/.proof.out
 /coverage
