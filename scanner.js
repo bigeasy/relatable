@@ -480,7 +480,7 @@ function Scanner () {
     */]).shift();
     $ = table.split('.');
     if ($.length == 2) {
-      schema = $[0], table = $[1]; 
+      schema = $[0], table = $[1];
     }
     var columns = [];
     var literals = {};

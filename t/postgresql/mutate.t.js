@@ -38,7 +38,7 @@ require("./proof")(3, function (step, resetManufacturer, relatable, deepEqual) {
       deepEqual(
         result.map(function (manufacturer) { return manufacturer.name }),
          [ "Acme" ], 'isolated');
-      
+
       mutator.rollback();
 
   });
