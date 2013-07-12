@@ -20,7 +20,7 @@
 ,   "devDependencies":
     { "mysql": "~0"
     , "pg": ">=0"
-    , "proof": "0.0.28"
+    , "proof": "0.0.32"
     }
 ,   "scripts" : { "test": "proof platform win32 && proof test */*/*.t.js || t/test" }
 }
