@@ -15,7 +15,7 @@
 ,   "url" :             "http://bigeasy.github.com/relatable"
 ,   "keywords" :        ["orm", "json", "sql", "rdbms", "postgresql", "mysql", "database"]
 ,   "dependencies":
-    { "cadence": "0.0.16"
+    { "cadence": "0.0.23"
     }
 ,   "devDependencies":
     { "mysql": "~0"

@@ -123,15 +123,15 @@ Selection.prototype.gather = cadence(function (step, sql, structures, parameters
 });
 
 Selection.prototype.temporary = cadence(function (step, structures, prepare) {
-  var next;
-  step(next = function () {
-    var parameters = prepare.shift().concat(step());
-    this.connection.sql.apply(this.connection, parameters);
+  step(function () {
+
+    step(function (parameters) {
+      this.connection.sql.apply(this.connection, parameters.concat(step()));
+    })(prepare)
 
   }, function () {
 
-    if (prepare.length) step(next)();
-    else this.gather('\
+    this.gather('\
         SELECT * \
         FROM ' + structures[0].temporary + ' \
        ORDER \
