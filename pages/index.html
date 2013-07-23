@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<meta charset="utf-8">
+<title>Relatable</title>
+<link href="http://fonts.googleapis.com/css?family=ABeeZee|Inconsolata|Karla:400,700|Oxygen+Mono" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=Sorts+Mill+Goudy">
+<link rel="stylesheet" type="text/css" href="css/syntax.css">
+<link rel="stylesheet" type="text/css" href="css/relatable.css">
+<body><a href="https://github.com/bigeasy/relatable/"><img style="position: absolute; top: 0; left: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_left_gray_6d6d6d.png" alt="Fork me on GitHub"></a><div class="container">
+
+<div class="unit welcome">
+<h1>Relatable</h1>
+</div>
+
+<div class="unit description markdown">
+Turns your SQL queries in to JSON trees.
+
+Please join the [pre-alpha
+discussion](https://github.com/bigeasy/relatable/issues/10).
+
+## Change Log
+
+Changes for each release.
+
+### Version 0.0.4
+
+Mon Apr  8 23:53:03 UTC 2013
+
+ * Implement raw SQL in the mutator transaction. #55.
+ * Allow schema qualified table names in mutations. #54. #27.
+ * Specify schema in `FROM` and `JOIN`. #52.
+ * Gather test coverage from Travis CI using Istanbul and send to coveralls.io.
+
+### Version 0.0.3
+
+Fri Apr  5 15:01:27 UTC 2013
+
+ * Add `.gitignore`. #51.
+ * Implement commit and rollback. #35. #34.
+ * Evaluated parameters. #43.
+ * Parameters in sub-selects. #48.
+ * Source SQL from file. #50. #47.
+ * Add Cadence as a dependency.
+ * Nested sub-selects. #49.
+ * Honor `AND` in sub-select. #46.
+ * Implement named parameters indicated by `$`. #42.
+ * Implement sub-select in SELECT clause. #32.
+ * Tidy.
+ * Add license, contribution guide and design diary.
+ * Fix `insertIf`. #33.
+ * Remove `lib` directory. #29.
+ * Move Travis CI configuration to `t` directory. #31.
+ * Move `ddl` to `t` directory. #30.
+
+### Version 0.0.2
+
+Fri Mar  1 07:30:38 UTC 2013
+
+ * Initial release.
+</div>
+
+</div></body>
+<script>
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-20388260-3', 'bigeasy.github.io');
+ga('send', 'pageview');
+</script>
+</html>

@@ -1,6 +1,0 @@
-[submodule "edify"]
-	path = edify
-	url = git://github.com/bigeasy/edify.git
-[submodule "code"]
-	path = code
-	url = git://github.com/bigeasy/relatable.git
